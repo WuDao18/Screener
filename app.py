@@ -14,42 +14,28 @@ from googleapiclient.errors import HttpError
 
 from io import BytesIO
 
-folder_id = '1pjW5_S83PMTUh0Kfy7XiyP69H0XJ1Hmt'
+# Google Drive API scope
+SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
+
+folder_id = '1VqBBtvzHOb8FKVgP5r1uoRWEWltPVdeD'
+
 
 def authenticate_drive_api():
-    # Access the 'installed' secret configuration
-    installed_config = st.secrets.get("google", {})
-    if not installed_config:
-        st.error("Google installed credentials are missing or misconfigured in Streamlit secrets.")
-    else:
-        # Your existing code to authenticate
-        flow = InstalledAppFlow.from_client_config(
-            installed_config,
-            scopes=["https://www.googleapis.com/auth/drive.readonly"]
-        )
-    st.write(st.secrets.keys())
+    """Authenticate and build the Drive API client using Streamlit secrets."""
     creds = None
+    try:
+        # Load service account info from Streamlit secrets
+        service_account_info = st.secrets["gdrive"]["service_account"]
 
-    # Check if there are already saved credentials in the session
-    if 'credentials' in st.session_state:
-        creds = st.session_state['credentials']
+        # Create credentials using the service account info and the specified SCOPES
+        creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
 
-    # If no valid credentials, go through the login process
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            # The authentication step to obtain new credentials
-            creds = flow.run_local_server(port=0)  # This will open a browser for authentication
+        # Return the Drive API client
+        return build('drive', 'v3', credentials=creds)
 
-        # Save credentials to session for future use
-        st.session_state['credentials'] = creds
-
-    # Build the API client
-    return build("drive", "v3", credentials=creds)
-
-# Call the authenticate function to initialize the API client
-drive_service = authenticate_drive_api()
+    except Exception as e:
+        print(f"Error during authentication: {e}")
+        return None
 
 
 def list_files_in_folder(service, folder_id):
@@ -467,7 +453,7 @@ def main():
                     try:
                         # Authenticate and download the file content (this returns a DataFrame directly)
                         service = authenticate_drive_api()
-                        file_id = '11WYYqM1vyVaRrAvnu5Wkef8WHMiofD0O'  # meeting criteria file
+                        file_id = '1dcLwOQ47kIW8NZJy0qkmQtknz6I4cTyO'  # meeting criteria file
                         file_content = download_file(service, file_id)
 
                         # Print the type of file_content to check if it's already a DataFrame
@@ -478,7 +464,7 @@ def main():
                         if isinstance(file_content, pd.DataFrame):
                             df = file_content  # Directly use it as the DataFrame
                         else:
-                            st.error("Error: The downloaded file content is not a DataFrame.")
+                            st.error("Error at button: The downloaded file content is not a DataFrame.")
                             return  # Exit the function early
 
                         if df.empty:
