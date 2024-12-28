@@ -454,12 +454,15 @@ def main():
                     try:
                         # Authenticate and download the file content (this returns a DataFrame directly)
                         service = authenticate_drive_api()
+                        st.text(f"Service authenticated: {service is not None}")
                         file_id = '1dcLwOQ47kIW8NZJy0qkmQtknz6I4cTyO'  # meeting criteria file
                         file_content = download_file(service, file_id)
 
                         # Print the type of file_content to check if it's already a DataFrame
-                        print(
-                            f"Downloaded file content type: {type(file_content)}")  # Should print <class 'pandas.core.frame.DataFrame'>
+                       # print(
+                        #    f"Downloaded file content type: {type(file_content)}")  # Should print <class 'pandas.core.frame.DataFrame'>
+
+                        st.text(f"Downloaded file content type: {type(file_content)}")
 
                         # Ensure that the file_content is a DataFrame
                         if isinstance(file_content, pd.DataFrame):
