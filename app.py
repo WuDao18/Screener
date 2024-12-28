@@ -34,7 +34,7 @@ def authenticate_drive_api():
 
         # Use the credentials to authorize and build the service
         service = build('drive', 'v3', credentials=credentials)
-        st.text(service)
+        #st.text(service)
         return service
 
     except Exception as e:
@@ -73,7 +73,7 @@ def list_files_in_folder(service, folder_id):
 def download_file(service, file_id):
     """Download a file from Google Drive and return its content as a DataFrame."""
     try:
-        st.text(f"Starting download of file with ID: {file_id}")
+        #st.text(f"Starting download of file with ID: {file_id}")
 
         # Request to download the file
         request = service.files().get_media(fileId=file_id)
@@ -83,17 +83,17 @@ def download_file(service, file_id):
         done = False
         while not done:
             status, done = downloader.next_chunk()  # Progress indicator
-            st.text(f"Download progress: {int(status.progress() * 100)}%")
+           # st.text(f"Download progress: {int(status.progress() * 100)}%")
 
         # After download, check the size of the file
-        st.text(f"Download completed. File size: {file_content.getbuffer().nbytes} bytes.")
+        #st.text(f"Download completed. File size: {file_content.getbuffer().nbytes} bytes.")
 
         # Ensure we are correctly reading the file content into a DataFrame
         file_content.seek(0)  # Reset the file pointer to the beginning after download
         try:
-            st.text("Attempting to read the file into a DataFrame...")
+            #st.text("Attempting to read the file into a DataFrame...")
             df = pd.read_excel(file_content, engine='openpyxl')
-            st.text("File read successfully into DataFrame.")
+            #st.text("File read successfully into DataFrame.")
             return df
         except Exception as e:
             st.text(f"Error reading the Excel file: {e}")
@@ -457,7 +457,7 @@ def main():
                     try:
                         # Authenticate and download the file content (this returns a DataFrame directly)
                         service = authenticate_drive_api()
-                        st.text(f"Service authenticated button: {service is not None}")
+                        #st.text(f"Service authenticated button: {service is not None}")
                         file_id = '1dcLwOQ47kIW8NZJy0qkmQtknz6I4cTyO'  # meeting criteria file
                         file_content = download_file(service, file_id)
 
@@ -465,7 +465,7 @@ def main():
                        # print(
                         #    f"Downloaded file content type: {type(file_content)}")  # Should print <class 'pandas.core.frame.DataFrame'>
 
-                        st.text(f"Downloaded file content type: {type(file_content)}")
+                        #st.text(f"Downloaded file content type: {type(file_content)}")
 
                         # Ensure that the file_content is a DataFrame
                         if isinstance(file_content, pd.DataFrame):
