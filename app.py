@@ -21,28 +21,21 @@ from io import BytesIO
 folder_id = '1VqBBtvzHOb8FKVgP5r1uoRWEWltPVdeD'
 
 
+# Function to authenticate and return the Google API service
 def authenticate_drive_api():
-    """Authenticate and build the Drive API client using Streamlit secrets."""
-    creds = None
     try:
-        # Load service account info from Streamlit secrets
-        #service_account_info = st.secrets["service_account"]
-        #st.text(service_account_info)
-        # Create credentials using the service account info and the specified SCOPES
-        #creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
-        #st.text(creds)
-        # Return the Drive API client
-        service_account_info = json.loads(st.secrets["google_credentials"])
+        # Load the credentials from Streamlit secrets (no need for json.loads)
+        service_account_info = st.secrets["google_credentials"]
 
         # Create credentials using the service account info and the specified SCOPES
         credentials = service_account.Credentials.from_service_account_info(
-            service_account_info, scopes=['https://www.googleapis.com/auth/drive.readonly'])
+            service_account_info, scopes=['https://www.googleapis.com/auth/drive.readonly']
+        )
 
         # Use the credentials to authorize and build the service
         service = build('drive', 'v3', credentials=credentials)
-        st.text(service)
+        st.text("Service authenticated: True")
         return service
-        #return build('drive', 'v3', credentials=credentials)
 
     except Exception as e:
         st.error(f"Error during authentication: {e}")
