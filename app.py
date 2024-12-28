@@ -12,11 +12,11 @@ from google.auth.transport.requests import Request
 from googleapiclient.http import MediaIoBaseDownload
 from googleapiclient.errors import HttpError
 import json
-
+from google.oauth2 import service_account
 from io import BytesIO
 
 # Google Drive API scope
-SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
+#SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
 folder_id = '1VqBBtvzHOb8FKVgP5r1uoRWEWltPVdeD'
 
@@ -26,13 +26,23 @@ def authenticate_drive_api():
     creds = None
     try:
         # Load service account info from Streamlit secrets
-        service_account_info = st.secrets["service_account"]
-        st.text(service_account_info)
+        #service_account_info = st.secrets["service_account"]
+        #st.text(service_account_info)
         # Create credentials using the service account info and the specified SCOPES
-        creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
-        st.text("Service authenticated: True")
+        #creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
+        #st.text(creds)
         # Return the Drive API client
-        return build('drive', 'v3', credentials=creds)
+        service_account_info = json.loads(st.secrets["google_credentials"])
+
+        # Create credentials using the service account info and the specified SCOPES
+        credentials = service_account.Credentials.from_service_account_info(
+            service_account_info, scopes=['https://www.googleapis.com/auth/drive.readonly'])
+
+        # Use the credentials to authorize and build the service
+        service = build('drive', 'v3', credentials=credentials)
+        st.text(service)
+        return service
+        #return build('drive', 'v3', credentials=credentials)
 
     except Exception as e:
         st.error(f"Error during authentication: {e}")
