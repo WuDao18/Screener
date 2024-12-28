@@ -11,6 +11,7 @@ from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
 from googleapiclient.http import MediaIoBaseDownload
 from googleapiclient.errors import HttpError
+import json
 
 from io import BytesIO
 
@@ -25,8 +26,8 @@ def authenticate_drive_api():
     creds = None
     try:
         # Load service account info from Streamlit secrets
-        service_account_info = st.secrets["gdrive"]["service_account"]
-
+        service_account_info = st.secrets["service_account"]
+        print(service_account_info)
         # Create credentials using the service account info and the specified SCOPES
         creds = Credentials.from_service_account_info(service_account_info, scopes=SCOPES)
 
