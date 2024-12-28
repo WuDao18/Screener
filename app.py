@@ -34,7 +34,7 @@ def authenticate_drive_api():
 
         # Use the credentials to authorize and build the service
         service = build('drive', 'v3', credentials=credentials)
-        st.text("Service authenticated: True")
+        st.text(service)
         return service
 
     except Exception as e:
@@ -73,7 +73,7 @@ def list_files_in_folder(service, folder_id):
 def download_file(service, file_id):
     """Download a file from Google Drive and return its content as a DataFrame."""
     try:
-        print(f"Starting download of file with ID: {file_id}")
+        st.text(f"Starting download of file with ID: {file_id}")
 
         # Request to download the file
         request = service.files().get_media(fileId=file_id)
@@ -83,26 +83,26 @@ def download_file(service, file_id):
         done = False
         while not done:
             status, done = downloader.next_chunk()  # Progress indicator
-            print(f"Download progress: {int(status.progress() * 100)}%")
+            st.text(f"Download progress: {int(status.progress() * 100)}%")
 
         # After download, check the size of the file
-        print(f"Download completed. File size: {file_content.getbuffer().nbytes} bytes.")
+        st.text(f"Download completed. File size: {file_content.getbuffer().nbytes} bytes.")
 
         # Ensure we are correctly reading the file content into a DataFrame
         file_content.seek(0)  # Reset the file pointer to the beginning after download
         try:
-            print("Attempting to read the file into a DataFrame...")
+            st.text("Attempting to read the file into a DataFrame...")
             df = pd.read_excel(file_content, engine='openpyxl')
-            print("File read successfully into DataFrame.")
+            st.text("File read successfully into DataFrame.")
             return df
         except Exception as e:
-            print(f"Error reading the Excel file: {e}")
+            st.text(f"Error reading the Excel file: {e}")
             return None
     except HttpError as error:
-        print(f"Google Drive API Error: {error}")
+        st.text(f"Google Drive API Error: {error}")
         return None
     except Exception as e:
-        print(f"General error occurred during file download or processing: {e}")
+        st.text(f"General error occurred during file download or processing: {e}")
         return None
 
 
@@ -457,7 +457,7 @@ def main():
                     try:
                         # Authenticate and download the file content (this returns a DataFrame directly)
                         service = authenticate_drive_api()
-                        st.text(f"Service authenticated: {service is not None}")
+                        st.text(f"Service authenticated button: {service is not None}")
                         file_id = '1dcLwOQ47kIW8NZJy0qkmQtknz6I4cTyO'  # meeting criteria file
                         file_content = download_file(service, file_id)
 
