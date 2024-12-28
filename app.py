@@ -287,7 +287,7 @@ def calculate_fund_flow(df):
 
 # Function to display chart
 def display_chart(stock_symbol):
-    df = load_stock_data(stock_symbol,'1pjW5_S83PMTUh0Kfy7XiyP69H0XJ1Hmt')
+    df = load_stock_data(stock_symbol,'1VqBBtvzHOb8FKVgP5r1uoRWEWltPVdeD')
     if df is not None:
         higher, lower, palette, signal, slow_ma_c = calculate_fund_flow(df)
 
