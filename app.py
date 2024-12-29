@@ -214,7 +214,7 @@ def check_indicators_and_save(df, min_volume, min_price, min_banker_value, max_b
         if st.session_state.get('n1_check', False):
             mask &= (df['n1'] == 1)
         if st.session_state.get('y1_check', False):
-            mask &= (df['mfy'] == 0 & df['mft'] == 1)
+            mask &= (df['y1'] == 1)
         if st.session_state.get('zj_check', False):
             mask &= (df['zj'] == 1)
         if st.session_state.get('qs_check', False):
