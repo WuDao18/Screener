@@ -203,7 +203,7 @@ def select_stock(stock):
     st.session_state['selected_stock'] = stock
     st.session_state['page'] = "Chart Viewer"
 
-def check_indicators_and_save(df, min_volume, min_price, min_banker_value):
+def check_indicators_and_save(df, min_volume, min_price, min_banker_value, max_banker_value):
     try:
         # Initialize mask for filtering
         mask = pd.Series([True] * len(df))
@@ -211,8 +211,10 @@ def check_indicators_and_save(df, min_volume, min_price, min_banker_value):
         # Apply filters based on checkbox states
         if st.session_state.get('rainbow_check', False):
             mask &= (df['rainbow'] == 1)
+        if st.session_state.get('n1_check', False):
+            mask &= (df['n1'] == 1)
         if st.session_state.get('y1_check', False):
-            mask &= (df['y1'] == 1)
+            mask &= (df['mfy'] == 0 and df['mft'] == 1)
         if st.session_state.get('zj_check', False):
             mask &= (df['zj'] == 1)
         if st.session_state.get('qs_check', False):
@@ -224,7 +226,9 @@ def check_indicators_and_save(df, min_volume, min_price, min_banker_value):
         if min_price:
             mask &= (df['close'] >= min_price)
         if min_banker_value:
-            mask &= (df['brsi'] >= min_banker_value)  # Assuming `brsi` column exists
+            mask &= (df['brsi'] >= min_banker_value)
+        if max_banker_value:
+            mask &= (df['brsi'] >= max_banker_value)
 
         # Get matching symbols
         matching_symbols = [str(symbol) for symbol in df[mask]['symbol'].tolist()]
@@ -421,6 +425,7 @@ def main():
 
             with col1:
                 rainbow_selected = st.checkbox("彩图", key="rainbow_check")
+                n1_selected = st.checkbox("牛一", key="n1_check")
                 y1_selected = st.checkbox("第一黄柱", key="y1_check")
 
             with col2:
@@ -430,6 +435,7 @@ def main():
             # Count selected indicators
             selected_count = sum([
                 st.session_state.get('rainbow_check', False),
+                st.session_state.get('n1_check', False),
                 st.session_state.get('y1_check', False),
                 st.session_state.get('zj_check', False),
                 st.session_state.get('qs_check', False)
@@ -448,6 +454,10 @@ def main():
             # Minimum Banker Value Input
             min_banker_value = st.number_input("Minimum Banker Value (0-100) ", min_value=0, value=0, step=1,
                                                help="Enter 30 means will screen banker value with 30 and above")
+
+            # Maximum Banker Value Input
+            max_banker_value = st.number_input("Maximum Banker Value (0-100) ", min_value=0, value=0, step=1,
+                                               help="Enter 90 means will screen banker value with 90 and below")
 
             col5, col6 = st.columns([1, 1])
 
@@ -480,7 +490,7 @@ def main():
 
                         # Proceed with filtering the data and saving the results
                         matching_symbols, temp_file_path = check_indicators_and_save(df, min_volume, min_price,
-                                                                                     min_banker_value)
+                                                                                     min_banker_value, max_banker_value)
 
                         if temp_file_path is None:
                             st.warning("No path found or file not saved.")
