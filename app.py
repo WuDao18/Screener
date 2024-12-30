@@ -20,7 +20,7 @@ import datetime
 #SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
 folder_id = '1VqBBtvzHOb8FKVgP5r1uoRWEWltPVdeD'
-today_date = datetime.datetime.now().strftime('%d%m%y')
+
 
 # Function to authenticate and return the Google API service
 def authenticate_drive_api():
@@ -291,7 +291,8 @@ def display_chart(stock_symbol):
     if df is not None:
         # Ensure 'datetime' is a pandas datetime type
         df['datetime'] = pd.to_datetime(df['datetime'])
-
+        # Filter to keep only the last 60 rows
+        df = df.tail(60)
         # Create a full range of dates from the minimum to the maximum date in your data
         all_dates = pd.date_range(start=df['datetime'].min(), end=df['datetime'].max())
 
@@ -379,7 +380,7 @@ def display_chart(stock_symbol):
         )
 
     fig.update_layout(
-        title=f"Candlestick Chart {stock_symbol}",
+        title=f"三个月走势图 {stock_symbol}",
         xaxis=dict(
             title=None,
             showgrid=False,
@@ -543,6 +544,7 @@ def main():
             # Download button
             with col6:
                 if temp_file_path:
+                    today_date = datetime.datetime.now().strftime('%d%m%y')
                     try:
                         with open(temp_file_path, "r") as file:
                             file_data = file.read()
