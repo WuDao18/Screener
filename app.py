@@ -436,117 +436,114 @@ def main():
         if current_page == "Stock Screener":
             st.subheader("Stock Screener")
 
-            st.session_state['show_list'] = False
+            # Initialize session state for criteria and stock list if not already set
+            if 'criteria' not in st.session_state:
+                st.session_state['criteria'] = {}
+            if 'matching_stocks' not in st.session_state:
+                st.session_state['matching_stocks'] = []
+            if 'temp_file_path' not in st.session_state:
+                st.session_state['temp_file_path'] = None
 
             # Replace selectbox with checkboxes
             st.write("Select indicators (stocks must meet all selected criteria):")
             col1, col2 = st.columns(2)
 
             with col1:
-                rainbow_selected = st.checkbox("彩图", key="rainbow_check")
-                n1_selected = st.checkbox("牛一", key="n1_check")
-                y1_selected = st.checkbox("第一黄柱", key="y1_check")
+                rainbow_selected = st.checkbox("彩图", key="rainbow_check",
+                                               value=st.session_state['criteria'].get('rainbow', False))
+                n1_selected = st.checkbox("牛一", key="n1_check", value=st.session_state['criteria'].get('n1', False))
+                y1_selected = st.checkbox("第一黄柱", key="y1_check",
+                                          value=st.session_state['criteria'].get('y1', False))
 
             with col2:
-                zj_selected = st.checkbox("资金所向", key="zj_check")
-                qs_selected = st.checkbox("趋势专家", key="qs_check")
-
-            # Count selected indicators
-            selected_count = sum([
-                st.session_state.get('rainbow_check', False),
-                st.session_state.get('n1_check', False),
-                st.session_state.get('y1_check', False),
-                st.session_state.get('zj_check', False),
-                st.session_state.get('qs_check', False)
-            ])
+                zj_selected = st.checkbox("资金所向", key="zj_check",
+                                          value=st.session_state['criteria'].get('zj', False))
+                qs_selected = st.checkbox("趋势专家", key="qs_check",
+                                          value=st.session_state['criteria'].get('qs', False))
 
             st.write("Filter by user-defined values (optional):")
 
             # Minimum Volume Input
-            min_volume = st.number_input("Minimum Volume as a multiple of 100,000", min_value=0, value=0, step=1,
-                                         help="Example 5 means 500,000")
+            min_volume = st.number_input(
+                "Minimum Volume as a multiple of 100,000", min_value=0,
+                value=st.session_state['criteria'].get('min_volume', 0), step=1,
+                help="Example 5 means 500,000")
 
             # Minimum Stock Price Input
-            min_price = st.number_input("Minimum Stock Price", min_value=0.0, value=0.0, step=0.1,
-                                        help="Enter 0.3 means will screen stock price with 0.3 and above")
+            min_price = st.number_input(
+                "Minimum Stock Price", min_value=0.0, value=st.session_state['criteria'].get('min_price', 0.0),
+                step=0.1,
+                help="Enter 0.3 means will screen stock price with 0.3 and above")
 
             # Minimum Banker Value Input
-            min_banker_value = st.number_input("Minimum Banker Value (0-100) ", min_value=0, value=0, step=1,
-                                               help="Enter 30 means will screen banker value with 30 and above")
+            min_banker_value = st.number_input(
+                "Minimum Banker Value (0-100)", min_value=0,
+                value=st.session_state['criteria'].get('min_banker_value', 0), step=1,
+                help="Enter 30 means will screen banker value with 30 and above")
 
             # Maximum Banker Value Input
-            max_banker_value = st.number_input("Maximum Banker Value (0-100) ", min_value=0, value=0, step=1,
-                                               help="Enter 90 means will screen banker value with 90 and below")
+            max_banker_value = st.number_input(
+                "Maximum Banker Value (0-100)", min_value=0,
+                value=st.session_state['criteria'].get('max_banker_value', 0), step=1,
+                help="Enter 90 means will screen banker value with 90 and below")
 
             col5, col6 = st.columns([1, 1])
 
             with col5:
                 if st.button("选股 Screen Stock"):
+                    # Save the selected criteria to session state
+                    st.session_state['criteria'] = {
+                        'rainbow': rainbow_selected,
+                        'n1': n1_selected,
+                        'y1': y1_selected,
+                        'zj': zj_selected,
+                        'qs': qs_selected,
+                        'min_volume': min_volume,
+                        'min_price': min_price,
+                        'min_banker_value': min_banker_value,
+                        'max_banker_value': max_banker_value,
+                    }
+
                     st.session_state['show_list'] = False
                     try:
                         # Authenticate and download the file content (this returns a DataFrame directly)
                         service = authenticate_drive_api()
-                        #st.text(f"Service authenticated button: {service is not None}")
-                        file_id = '1dcLwOQ47kIW8NZJy0qkmQtknz6I4cTyO'  # meeting criteria file
+                        file_id = '1dcLwOQ47kIW8NZJy0qkmQtknz6I4cTyO'  # Meeting criteria file
                         file_content = download_file(service, file_id)
 
-                        # Print the type of file_content to check if it's already a DataFrame
-                       # print(
-                        #    f"Downloaded file content type: {type(file_content)}")  # Should print <class 'pandas.core.frame.DataFrame'>
+                        if isinstance(file_content, pd.DataFrame) and not file_content.empty:
+                            # Proceed with filtering the data and saving the results
+                            matching_symbols, temp_file_path = check_indicators_and_save(
+                                file_content, min_volume, min_price, min_banker_value, max_banker_value)
 
-                        #st.text(f"Downloaded file content type: {type(file_content)}")
-
-                        # Ensure that the file_content is a DataFrame
-                        if isinstance(file_content, pd.DataFrame):
-                            df = file_content  # Directly use it as the DataFrame
-                        else:
-                            st.error("Error at button: The downloaded file content is not a DataFrame.")
-                            return  # Exit the function early
-
-                        if df.empty:
-                            st.error("DataFrame is empty!")
-                            return  # Exit the function early
-
-                        # Proceed with filtering the data and saving the results
-                        matching_symbols, temp_file_path = check_indicators_and_save(df, min_volume, min_price,
-                                                                                     min_banker_value, max_banker_value)
-
-                        if temp_file_path is None:
-                            st.warning("No path found or file not saved.")
-                            return  # Exit the function early
-
-                        # Display the results of the filtering
-                        if matching_symbols:
-                            st.success("Matching stocks are found!")
-                            st.session_state['show_list'] = True
-                        else:
-                            st.warning("No stocks found matching all selected criteria.")
-
-                    except Exception as e:
-                        # Catch any other errors that occur during the process
-                        st.error(f"Error processing data at button: {str(e)}")
-
-                # Display results
-                if st.session_state['show_list']:
-                    if temp_file_path:
-                        try:
-                            with open(temp_file_path, "r") as file:
-                                stock_list = file.read().splitlines()
-                            if stock_list:
-                                num_matching_stocks = len(matching_symbols)
-                                st.write(f"Number of stocks meeting the criteria: {num_matching_stocks}")
-                                display_symbols_in_columns(stock_list)  # Call the function to display symbols in columns
+                            if temp_file_path:
+                                st.session_state['temp_file_path'] = temp_file_path
+                                st.session_state['matching_stocks'] = matching_symbols
+                                if matching_symbols:
+                                    st.session_state['show_list'] = True
+                                    st.success("Matching stocks are found!")
+                                else:
+                                    st.warning("No stocks found matching all selected criteria.")
                             else:
-                                st.warning("No matching stocks found in the file.")
-                        except Exception as e:
-                            st.error(f"Error reading results file: {str(e)}")
+                                st.warning("No path found or file not saved.")
+                        else:
+                            st.error("Error: The downloaded file content is empty or invalid.")
+                    except Exception as e:
+                        st.error(f"Error processing data: {str(e)}")
+
+            # Display results
+            if st.session_state.get('show_list', False):
+                stock_list = st.session_state.get('matching_stocks', [])
+                if stock_list:
+                    st.write(f"Number of stocks meeting the criteria: {len(stock_list)}")
+                    display_symbols_in_columns(stock_list)
 
             # Download button
             with col6:
-                if temp_file_path:
+                if st.session_state.get('temp_file_path'):
                     today_date = datetime.datetime.now().strftime('%d%m%y')
                     try:
-                        with open(temp_file_path, "r") as file:
+                        with open(st.session_state['temp_file_path'], "r") as file:
                             file_data = file.read()
                         if file_data:
                             st.download_button(
@@ -557,6 +554,7 @@ def main():
                             )
                     except FileNotFoundError:
                         st.warning("No file available to download.")
+
 
             # Allow manual input of stock symbol
             stock_input = st.text_input("Or enter a stock symbol for chart viewing:")
