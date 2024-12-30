@@ -228,7 +228,7 @@ def check_indicators_and_save(df, min_volume, min_price, min_banker_value, max_b
         if min_banker_value:
             mask &= (df['brsi'] >= min_banker_value)
         if max_banker_value:
-            mask &= (df['brsi'] >= max_banker_value)
+            mask &= (df['brsi'] <= max_banker_value)
 
         # Get matching symbols
         matching_symbols = [str(symbol) for symbol in df[mask]['symbol'].tolist()]
@@ -291,15 +291,23 @@ def calculate_fund_flow(df):
 
 # Function to display chart
 def display_chart(stock_symbol):
-    df = load_stock_data(stock_symbol,'1VqBBtvzHOb8FKVgP5r1uoRWEWltPVdeD')
+    df = load_stock_data(stock_symbol, '1VqBBtvzHOb8FKVgP5r1uoRWEWltPVdeD')
     if df is not None:
+        # Ensure 'datetime' is a pandas datetime type
+        df['datetime'] = pd.to_datetime(df['datetime'])
+
+        # Create a full range of dates from the minimum to the maximum date in your data
+        all_dates = pd.date_range(start=df['datetime'].min(), end=df['datetime'].max())
+
+        # Find missing dates
+        missing_dates = all_dates.difference(df['datetime'])
         higher, lower, palette, signal, slow_ma_c = calculate_fund_flow(df)
 
         fig = make_subplots(
             rows=3,
             cols=1,
             shared_xaxes=True,
-            row_heights=[0.7, 0.2, 0.1],
+            row_heights=[0.5, 0.2, 0.3],
             vertical_spacing=0.03,
         )
 
@@ -368,21 +376,43 @@ def display_chart(stock_symbol):
                 col=1,
             )
 
+        fig.update_xaxes(
+            rangebreaks=[
+                dict(values=missing_dates),  # Skip missing dates
+            ]
+        )
+
         fig.update_layout(
             title=f"Candlestick Chart {stock_symbol}",
-            xaxis=dict(title=None, showgrid=False),
-            xaxis3=dict(title="日期", showgrid=False),
+            xaxis=dict(
+                title=None,
+                showgrid=False,
+                rangeselector=dict(
+                    buttons=[
+                        dict(count=1, label="1M", step="month", stepmode="backward"),
+                        dict(count=3, label="3M", step="month", stepmode="backward"),
+                        dict(count=6, label="6M", step="month", stepmode="backward"),
+                        dict(count=1, label="1Y", step="year", stepmode="backward"),
+                        dict(step="all", label="All"),
+                    ]
+                ),
+                rangeslider=dict(visible=False),
+            ),
             yaxis=dict(title="股价", side="left"),
             yaxis2=dict(title="交易量", side="left"),
             yaxis3=dict(title="资金所向", side="left"),
-            height=800,
+            dragmode='pan',
+            height=1200,
             showlegend=False,
-            xaxis_rangeslider_visible=False,
         )
-
-        fig.update_xaxes(rangebreaks=[dict(bounds=["sat", "mon"])])
-
-        st.plotly_chart(fig, use_container_width=True)
+        # Display plotly chart in Streamlit with mode bar visible and customized buttons
+        st.plotly_chart(fig, use_container_width=True, config={
+            'displayModeBar': True,  # Display Plotly Mode Bar (including zoom, pan, etc.)
+            'scrollZoom': False,  # Disable scroll zoom
+            'displaylogo': False,  # Hide the Plotly logo on the mode bar
+            'modeBarButtonsToRemove': ['zoom', 'zoomIn', 'zoomOut', 'pan', 'select2d', 'lasso2d'],
+            # Remove zoom and pan buttons
+        })
 
 
 # Main function
