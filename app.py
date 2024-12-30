@@ -481,7 +481,7 @@ def main():
             col5, col6 = st.columns([1, 1])
 
             with col5:
-                if st.button("OK"):
+                if st.button("选股 Screen Stock"):
                     st.session_state['show_list'] = False
                     try:
                         # Authenticate and download the file content (this returns a DataFrame directly)
