@@ -141,7 +141,6 @@ if 'logged_in' not in st.session_state:
     st.session_state['selected_stock'] = None
     st.session_state['show_list'] = False
 
-
 # Function to handle login
 def login(username, password):
     if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
@@ -150,11 +149,7 @@ def login(username, password):
         st.session_state['page'] = 'Stock Screener'
         st.success(f"Welcome, {username}!")
     else:
-        st.session_state['logged_in'] = False
-        st.session_state['username'] = ""
-        st.session_state['page'] = ''
-        st.error("Invalid username or password, please try again.")
-
+        st.error("Invalid username or password. Please try again.")
 
 # Function to handle logout
 def logout():
@@ -164,6 +159,7 @@ def logout():
     st.session_state['selected_stock'] = None
     st.session_state['show_list'] = False
     st.info("You have been logged out.")
+
 
 def display_symbols_in_columns(symbols):
     """
@@ -402,7 +398,7 @@ def display_chart(stock_symbol):
             yaxis2=dict(title="交易量", side="left"),
             yaxis3=dict(title="资金所向", side="left"),
             dragmode='pan',
-            height=1200,
+            height=1000,
             showlegend=False,
         )
         # Display plotly chart in Streamlit with mode bar visible and customized buttons
@@ -422,21 +418,25 @@ def main():
     num_matching_stocks = 0
     temp_file_path = None
 
+    # Login form if user is not logged in
     if not st.session_state['logged_in']:
         st.subheader("Login")
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        if st.button("Login"):
-            login(username, password)
-            if st.session_state['logged_in']:
-                st.rerun()
+        with st.form("login_form"):
+            username = st.text_input("Username")
+            password = st.text_input("Password", type="password")
+            submit_button = st.form_submit_button("Login")
 
+            if submit_button:
+                login(username, password)
+                if st.session_state['logged_in']:
+                    st.rerun()  # Rerun the app to reflect login state
+
+    # Post-login content
     if st.session_state['logged_in']:
         st.sidebar.title(f"Welcome, {st.session_state['username']}!")
         if st.sidebar.button("Logout"):
             logout()
             st.rerun()
-
         # Navigation
         st.sidebar.subheader("Navigation")
         current_page = st.sidebar.radio("Choose Page", ["Stock Screener", "Chart Viewer"],
