@@ -14,12 +14,13 @@ from googleapiclient.errors import HttpError
 import json
 from google.oauth2 import service_account
 from io import BytesIO
+import datetime
 
 # Google Drive API scope
 #SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
 folder_id = '1VqBBtvzHOb8FKVgP5r1uoRWEWltPVdeD'
-
+today_date = datetime.datetime.now().strftime('%d%m%y')
 
 # Function to authenticate and return the Google API service
 def authenticate_drive_api():
@@ -284,7 +285,6 @@ def calculate_fund_flow(df):
 
     return higher, lower, palette, signal, slow_ma_c
 
-
 # Function to display chart
 def display_chart(stock_symbol):
     df = load_stock_data(stock_symbol, '1VqBBtvzHOb8FKVgP5r1uoRWEWltPVdeD')
@@ -378,37 +378,25 @@ def display_chart(stock_symbol):
             ]
         )
 
-        fig.update_layout(
-            title=f"Candlestick Chart {stock_symbol}",
-            xaxis=dict(
-                title=None,
-                showgrid=False,
-                rangeselector=dict(
-                    buttons=[
-                        dict(count=1, label="1M", step="month", stepmode="backward"),
-                        dict(count=3, label="3M", step="month", stepmode="backward"),
-                        dict(count=6, label="6M", step="month", stepmode="backward"),
-                        dict(count=1, label="1Y", step="year", stepmode="backward"),
-                        dict(step="all", label="All"),
-                    ]
-                ),
-                rangeslider=dict(visible=False),
-            ),
-            yaxis=dict(title="股价", side="left"),
-            yaxis2=dict(title="交易量", side="left"),
-            yaxis3=dict(title="资金所向", side="left"),
-            dragmode='pan',
-            height=1000,
-            showlegend=False,
-        )
-        # Display plotly chart in Streamlit with mode bar visible and customized buttons
-        st.plotly_chart(fig, use_container_width=True, config={
-            'displayModeBar': True,  # Display Plotly Mode Bar (including zoom, pan, etc.)
-            'scrollZoom': False,  # Disable scroll zoom
-            'displaylogo': False,  # Hide the Plotly logo on the mode bar
-            'modeBarButtonsToRemove': ['zoom', 'zoomIn', 'zoomOut', 'pan', 'select2d', 'lasso2d'],
-            # Remove zoom and pan buttons
-        })
+    fig.update_layout(
+        title=f"Candlestick Chart {stock_symbol}",
+        xaxis=dict(
+            title=None,
+            showgrid=False,
+            rangeslider=dict(visible=False),
+        ),
+        yaxis=dict(title="股价", side="left"),
+        yaxis2=dict(title="交易量", side="left"),
+        yaxis3=dict(title="资金所向", side="left"),
+        height=800,
+        showlegend=False,
+    )
+
+    # Display the static plotly chart in Streamlit
+    st.plotly_chart(fig, use_container_width=True, config={
+        'displayModeBar': False,  # Disable the mode bar entirely
+        'staticPlot': True  # Make the chart static and non-interactive
+    })
 
 
 # Main function
@@ -562,7 +550,7 @@ def main():
                             st.download_button(
                                 label="Download File",
                                 data=file_data,
-                                file_name="filtered_results.txt",
+                                file_name=f"filtered_result_{today_date}.txt",
                                 mime="text/plain"
                             )
                     except FileNotFoundError:
