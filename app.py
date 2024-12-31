@@ -127,41 +127,6 @@ def load_stock_data(stock_symbol, folder_id):
     return download_file(service, file_to_download['id'])
 
 
-# Define user credentials
-USER_CREDENTIALS = {
-    "user1": "123",
-    "user2": "456",
-    "admin": "admin123"
-}
-
-# Initialize session state
-if 'logged_in' not in st.session_state:
-    st.session_state['logged_in'] = False
-    st.session_state['username'] = ""
-    st.session_state['page'] = "Stock Screener"
-    st.session_state['selected_stock'] = None
-    st.session_state['show_list'] = False
-
-# Function to handle login
-def login(username, password):
-    if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
-        st.session_state['logged_in'] = True
-        st.session_state['username'] = username
-        st.session_state['page'] = 'Stock Screener'
-        st.success(f"Welcome, {username}!")
-    else:
-        st.error("Invalid username or password. Please try again.")
-
-# Function to handle logout
-def logout():
-    st.session_state['logged_in'] = False
-    st.session_state['username'] = ""
-    st.session_state['page'] = "Stock Screener"
-    st.session_state['selected_stock'] = None
-    st.session_state['show_list'] = False
-    st.info("You have been logged out.")
-
-
 def display_symbols_in_columns(symbols):
     """
     Display a list of stock symbols in 3 columns and trigger stock selection on button click.
@@ -198,7 +163,7 @@ def display_symbols_in_columns(symbols):
 # Function to handle stock selection
 def select_stock(stock):
     st.session_state['selected_stock'] = stock
-    st.session_state['page'] = "Chart Viewer"
+
 
 def check_indicators_and_save(df, min_volume, min_price, min_banker_value, max_banker_value):
     try:
@@ -288,11 +253,17 @@ def calculate_fund_flow(df):
 # Function to display chart
 def display_chart(stock_symbol):
     df = load_stock_data(stock_symbol, '1VqBBtvzHOb8FKVgP5r1uoRWEWltPVdeD')
-    if df is not None:
+    if df is None:
+        st.error(f"No data available for the stock symbol '{stock_symbol}'. Please check the symbol or the data file.")
+        return
+
+    try:
         # Ensure 'datetime' is a pandas datetime type
         df['datetime'] = pd.to_datetime(df['datetime'])
+
         # Filter to keep only the last 60 rows
         df = df.tail(60)
+
         # Create a full range of dates from the minimum to the maximum date in your data
         all_dates = pd.date_range(start=df['datetime'].min(), end=df['datetime'].max())
 
@@ -379,208 +350,160 @@ def display_chart(stock_symbol):
             ]
         )
 
-    fig.update_layout(
-        title=f"三个月走势图 {stock_symbol}",
-        xaxis=dict(
-            title=None,
-            showgrid=False,
-            rangeslider=dict(visible=False),
-        ),
-        yaxis=dict(title="股价", side="left"),
-        yaxis2=dict(title="交易量", side="left"),
-        yaxis3=dict(title="资金所向", side="left"),
-        height=800,
-        showlegend=False,
-    )
+        fig.update_layout(
+            title=f"三个月走势图 {stock_symbol}",
+            xaxis=dict(
+                title=None,
+                showgrid=False,
+                rangeslider=dict(visible=False),
+            ),
+            yaxis=dict(title="股价", side="left"),
+            yaxis2=dict(title="交易量", side="left"),
+            yaxis3=dict(title="资金所向", side="left"),
+            height=800,
+            showlegend=False,
+        )
 
-    # Display the static plotly chart in Streamlit
-    st.plotly_chart(fig, use_container_width=True, config={
-        'displayModeBar': False,  # Disable the mode bar entirely
-        'staticPlot': True  # Make the chart static and non-interactive
-    })
+        # Display the static plotly chart in Streamlit
+        st.plotly_chart(fig, use_container_width=True, config={
+            'displayModeBar': False,  # Disable the mode bar entirely
+            'staticPlot': True  # Make the chart static and non-interactive
+        })
 
+    except Exception as e:
+        st.error(f"An error occurred while creating the chart: {e}")
 
-# Main function
 def main():
     st.title("选股平台")
     # Initialize the number of matching stocks
     num_matching_stocks = 0
     temp_file_path = None
 
-    # Login form if user is not logged in
+    if 'logged_in' not in st.session_state:
+        st.session_state['logged_in'] = False
+        st.session_state['username'] = ""
+        st.session_state['selected_stock'] = None
+        st.session_state['show_list'] = False
+        st.session_state['criteria'] = {}
+        st.session_state['matching_stocks'] = []
+        st.session_state['temp_file_path'] = None
+    USER_CREDENTIALS = {"user1": "123", "user2": "456", "admin": "admin123"}
+
     if not st.session_state['logged_in']:
         st.subheader("Login")
         with st.form("login_form"):
             username = st.text_input("Username")
             password = st.text_input("Password", type="password")
-            submit_button = st.form_submit_button("Login")
+            login_button = st.form_submit_button("Login")
+            if login_button and username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
+                st.session_state['logged_in'] = True
+                st.session_state['username'] = username
+                st.success(f"Welcome, {username}!")
+    else:
+        st.sidebar.button("Logout", on_click=lambda: st.session_state.update({'logged_in': False, 'username': "", 'selected_stock': None, 'show_list': False}))
+        st.subheader("Stock Screener")
 
-            if submit_button:
-                login(username, password)
-                if st.session_state['logged_in']:
-                    st.rerun()  # Rerun the app to reflect login state
+        # Checkboxes for indicators
+        st.write("Select indicators (stocks must meet all selected criteria):")
+        col1, col2 = st.columns(2)
 
-    # Post-login content
-    if st.session_state['logged_in']:
-        st.sidebar.title(f"Welcome, {st.session_state['username']}!")
-        if st.sidebar.button("Logout"):
-            logout()
-            st.rerun()
-        # Navigation
-        st.sidebar.subheader("Navigation")
-        current_page = st.sidebar.radio("Choose Page", ["Stock Screener", "Chart Viewer"],
-                                        key='navigation',
-                                        index=0 if st.session_state['page'] == "Stock Screener" else 1)
-        st.session_state['page'] = current_page
+        with col1:
+            rainbow_selected = st.checkbox("彩图", key="rainbow_check",
+                                           value=st.session_state['criteria'].get('rainbow', False))
+            n1_selected = st.checkbox("牛一", key="n1_check", value=st.session_state['criteria'].get('n1', False))
+            y1_selected = st.checkbox("第一黄柱", key="y1_check", value=st.session_state['criteria'].get('y1', False))
 
-        if current_page == "Stock Screener":
-            st.subheader("Stock Screener")
+        with col2:
+            zj_selected = st.checkbox("资金所向", key="zj_check", value=st.session_state['criteria'].get('zj', False))
+            qs_selected = st.checkbox("趋势专家", key="qs_check", value=st.session_state['criteria'].get('qs', False))
 
-            # Initialize session state for criteria and stock list if not already set
-            if 'criteria' not in st.session_state:
-                st.session_state['criteria'] = {}
-            if 'matching_stocks' not in st.session_state:
-                st.session_state['matching_stocks'] = []
-            if 'temp_file_path' not in st.session_state:
-                st.session_state['temp_file_path'] = None
+        st.write("Filter by user-defined values (optional):")
 
-            # Replace selectbox with checkboxes
-            st.write("Select indicators (stocks must meet all selected criteria):")
-            col1, col2 = st.columns(2)
+        # Input fields for filters
+        min_volume = st.number_input("Minimum Volume as a multiple of 100,000", min_value=0,
+                                     value=st.session_state['criteria'].get('min_volume', 0), step=1)
+        min_price = st.number_input("Minimum Stock Price", min_value=0.0,
+                                    value=st.session_state['criteria'].get('min_price', 0.0), step=0.1)
+        min_banker_value = st.number_input("Minimum Banker Value (0-100)", min_value=0,
+                                           value=st.session_state['criteria'].get('min_banker_value', 0), step=1)
+        max_banker_value = st.number_input("Maximum Banker Value (0-100)", min_value=0,
+                                           value=st.session_state['criteria'].get('max_banker_value', 0), step=1)
 
-            with col1:
-                rainbow_selected = st.checkbox("彩图", key="rainbow_check",
-                                               value=st.session_state['criteria'].get('rainbow', False))
-                n1_selected = st.checkbox("牛一", key="n1_check", value=st.session_state['criteria'].get('n1', False))
-                y1_selected = st.checkbox("第一黄柱", key="y1_check",
-                                          value=st.session_state['criteria'].get('y1', False))
+        # Update criteria in session state
+        st.session_state['criteria'] = {
+            'rainbow': rainbow_selected,
+            'n1': n1_selected,
+            'y1': y1_selected,
+            'zj': zj_selected,
+            'qs': qs_selected,
+            'min_volume': min_volume,
+            'min_price': min_price,
+            'min_banker_value': min_banker_value,
+            'max_banker_value': max_banker_value,
+        }
 
-            with col2:
-                zj_selected = st.checkbox("资金所向", key="zj_check",
-                                          value=st.session_state['criteria'].get('zj', False))
-                qs_selected = st.checkbox("趋势专家", key="qs_check",
-                                          value=st.session_state['criteria'].get('qs', False))
+        col5, col6 = st.columns([1, 1])
 
-            st.write("Filter by user-defined values (optional):")
+        with col5:
+            if st.button("选股 Screen Stock"):
+                st.session_state['show_list'] = False
+                try:
+                    # Authenticate and download the file content (returns a DataFrame)
+                    service = authenticate_drive_api()
+                    file_id = '1dcLwOQ47kIW8NZJy0qkmQtknz6I4cTyO'
+                    file_content = download_file(service, file_id)
 
-            # Minimum Volume Input
-            min_volume = st.number_input(
-                "Minimum Volume as a multiple of 100,000", min_value=0,
-                value=st.session_state['criteria'].get('min_volume', 0), step=1,
-                help="Example 5 means 500,000")
+                    if isinstance(file_content, pd.DataFrame) and not file_content.empty:
+                        matching_symbols, temp_file_path = check_indicators_and_save(
+                            file_content, min_volume, min_price, min_banker_value, max_banker_value)
 
-            # Minimum Stock Price Input
-            min_price = st.number_input(
-                "Minimum Stock Price", min_value=0.0, value=st.session_state['criteria'].get('min_price', 0.0),
-                step=0.1,
-                help="Enter 0.3 means will screen stock price with 0.3 and above")
+                        st.session_state['temp_file_path'] = temp_file_path
+                        st.session_state['matching_stocks'] = matching_symbols
 
-            # Minimum Banker Value Input
-            min_banker_value = st.number_input(
-                "Minimum Banker Value (0-100)", min_value=0,
-                value=st.session_state['criteria'].get('min_banker_value', 0), step=1,
-                help="Enter 30 means will screen banker value with 30 and above")
-
-            # Maximum Banker Value Input
-            max_banker_value = st.number_input(
-                "Maximum Banker Value (0-100)", min_value=0,
-                value=st.session_state['criteria'].get('max_banker_value', 0), step=1,
-                help="Enter 90 means will screen banker value with 90 and below")
-
-            col5, col6 = st.columns([1, 1])
-
-            with col5:
-                if st.button("选股 Screen Stock"):
-                    # Save the selected criteria to session state
-                    st.session_state['criteria'] = {
-                        'rainbow': rainbow_selected,
-                        'n1': n1_selected,
-                        'y1': y1_selected,
-                        'zj': zj_selected,
-                        'qs': qs_selected,
-                        'min_volume': min_volume,
-                        'min_price': min_price,
-                        'min_banker_value': min_banker_value,
-                        'max_banker_value': max_banker_value,
-                    }
-
-                    st.session_state['show_list'] = False
-                    try:
-                        # Authenticate and download the file content (this returns a DataFrame directly)
-                        service = authenticate_drive_api()
-                        file_id = '1dcLwOQ47kIW8NZJy0qkmQtknz6I4cTyO'  # Meeting criteria file
-                        file_content = download_file(service, file_id)
-
-                        if isinstance(file_content, pd.DataFrame) and not file_content.empty:
-                            # Proceed with filtering the data and saving the results
-                            matching_symbols, temp_file_path = check_indicators_and_save(
-                                file_content, min_volume, min_price, min_banker_value, max_banker_value)
-
-                            if temp_file_path:
-                                st.session_state['temp_file_path'] = temp_file_path
-                                st.session_state['matching_stocks'] = matching_symbols
-                                if matching_symbols:
-                                    st.session_state['show_list'] = True
-                                    st.success("Matching stocks are found!")
-                                else:
-                                    st.warning("No stocks found matching all selected criteria.")
-                            else:
-                                st.warning("No path found or file not saved.")
+                        if matching_symbols:
+                            st.session_state['show_list'] = True
+                            st.success("Matching stocks are found!")
                         else:
-                            st.error("Error: The downloaded file content is empty or invalid.")
-                    except Exception as e:
-                        st.error(f"Error processing data: {str(e)}")
+                            st.warning("No stocks found matching all selected criteria.")
+                    else:
+                        st.error("Error: The downloaded file content is empty or invalid.")
+                except Exception as e:
+                    st.error(f"Error processing data: {str(e)}")
 
-            # Display results
-            if st.session_state.get('show_list', False):
-                stock_list = st.session_state.get('matching_stocks', [])
-                if stock_list:
-                    st.write(f"Number of stocks meeting the criteria: {len(stock_list)}")
-                    display_symbols_in_columns(stock_list)
+        # Display matching stocks
+        if st.session_state.get('show_list', False):
+            stock_list = st.session_state.get('matching_stocks', [])
+            if stock_list:
+                st.write(f"Number of stocks meeting the criteria: {len(stock_list)}")
+                display_symbols_in_columns(stock_list)
 
-            # Download button
-            with col6:
-                if st.session_state.get('temp_file_path'):
-                    today_date = datetime.datetime.now().strftime('%d%m%y')
-                    try:
-                        with open(st.session_state['temp_file_path'], "r") as file:
-                            file_data = file.read()
-                        if file_data:
-                            st.download_button(
-                                label="Download File",
-                                data=file_data,
-                                file_name=f"filtered_result_{today_date}.txt",
-                                mime="text/plain"
-                            )
-                    except FileNotFoundError:
-                        st.warning("No file available to download.")
+        # Download button
+        with col6:
+            if st.session_state.get('temp_file_path'):
+                today_date = datetime.datetime.now().strftime('%d%m%y')
+                try:
+                    with open(st.session_state['temp_file_path'], "r") as file:
+                        file_data = file.read()
+                    if file_data:
+                        st.download_button(
+                            label="Download File",
+                            data=file_data,
+                            file_name=f"filtered_result_{today_date}.txt",
+                            mime="text/plain"
+                        )
+                except FileNotFoundError:
+                    st.warning("No file available to download.")
 
+        # Manual stock symbol input
+        stock_input = st.text_input("Or enter a stock symbol for chart viewing:")
+        if st.button("Submit Stock") and stock_input:
+            select_stock(stock_input.strip())
+            st.session_state['selected_stock'] = stock_input.strip()
 
-            # Allow manual input of stock symbol
-            stock_input = st.text_input("Or enter a stock symbol for chart viewing:")
-
-            # Submit button for manual input
-            submit_button = st.button("Submit Stock")
-
-            # Handle stock symbol input and page navigation
-
-            if submit_button and stock_input:
-                # Remove 'MYX:' prefix if present for file loading
-                display_stock = stock_input.replace('MYX:', '')
-                select_stock(display_stock)
-                # Debugging: Check if session state is updated
-                # st.write(f"Page set to: {st.session_state.get('page', 'No page set')}")
-                st.session_state['page'] = "Chart Viewer"
-                # Rerun to navigate to Chart Viewer #need to press enter and then submit button
-                st.rerun()
-
-        elif current_page == "Chart Viewer":
-            st.subheader("Chart Viewer")
-            # If there's a selected stock from the screener or entered manually, use it
-            if st.session_state.get('selected_stock'):
-                # Remove 'MYX:' prefix if present for file loading
-                display_stock = st.session_state['selected_stock'].replace('MYX:', '')
-                display_chart(display_stock)
+        # Display selected stock chart
+        if st.session_state['selected_stock']:
+            display_stock = st.session_state['selected_stock'].replace('MYX:', '')
+            display_chart(display_stock)
 
 if __name__ == "__main__":
     main()
