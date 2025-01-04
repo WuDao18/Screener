@@ -190,7 +190,7 @@ def load_stock_data(stock_symbol, folder_id):
     return download_file(service, file_to_download['id'])
 
 def display_symbols_dropdown(symbols):
-    selected_stock = st.selectbox("Select a stock to view the chart:", options=symbols)
+    selected_stock = st.selectbox("请选择一只股票查看图表： Select a stock to view the chart:", options=symbols)
     if st.button("看图表 Show Chart"):
         select_stock(selected_stock)
         st.session_state['selected_stock'] = selected_stock
@@ -442,7 +442,7 @@ def display_chart(stock_symbol):
         st.error(f"An error occurred while creating the chart: {e}")
 
 def main():
-    st.title("选股平台")
+    st.title("选股平台 Stock Screener")
     add_custom_css()
     # Initialize the number of matching stocks
     num_matching_stocks = 0
@@ -459,20 +459,20 @@ def main():
     USER_CREDENTIALS = {"user1": "123", "user2": "456", "admin": "admin123"}
 
     if not st.session_state['logged_in']:
-        st.subheader("Login")
         with st.form("login_form"):
             username = st.text_input("Username")
             password = st.text_input("Password", type="password")
-            login_button = st.form_submit_button("Login")
+            login_button = st.form_submit_button("登入 Login")
             if login_button and username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
                 st.session_state['logged_in'] = True
                 st.session_state['username'] = username
                 st.success(f"Welcome, {username}!")
     else:
-        st.sidebar.button("Logout", on_click=lambda: st.session_state.update({'logged_in': False, 'username': "", 'selected_stock': None, 'show_list': False}))
-        st.subheader("Stock Screener")
+        st.sidebar.button("登出 Logout", on_click=lambda: st.session_state.update({'logged_in': False, 'username': "", 'selected_stock': None, 'show_list': False}))
+
 
         # Checkboxes for indicators
+        st.write("选股条件（股票必须满足所有条件）：")
         st.write("Select indicators (stocks must meet all selected criteria):")
         col1, col2 = st.columns(2)
 
@@ -486,16 +486,16 @@ def main():
             zj_selected = st.checkbox("资金所向", key="zj_check", value=st.session_state['criteria'].get('zj', False))
             qs_selected = st.checkbox("趋势专家", key="qs_check", value=st.session_state['criteria'].get('qs', False))
 
-        st.write("Filter by user-defined values (optional):")
+        #st.write("Filter by user-defined values (optional):")
 
         # Input fields for filters
-        min_volume = st.number_input("Minimum Volume as a multiple of 100,000", min_value=0,
+        min_volume = st.number_input("最低成交量为 100,000 的倍数   Minimum Volume as a multiple of 100,000", min_value=0,
                                      value=st.session_state['criteria'].get('min_volume', 0), step=1)
-        min_price = st.number_input("Minimum Stock Price", min_value=0.0,
+        min_price = st.number_input("最低股价   Minimum Stock Price", min_value=0.0,
                                     value=st.session_state['criteria'].get('min_price', 0.0), step=0.1)
-        min_banker_value = st.number_input("Minimum Banker Value (0-100)", min_value=0,
+        min_banker_value = st.number_input("最低红柱   Minimum Banker Value (0-100)", min_value=0,
                                            value=st.session_state['criteria'].get('min_banker_value', 0), step=1)
-        max_banker_value = st.number_input("Maximum Banker Value (0-100)", min_value=0,
+        max_banker_value = st.number_input("最高红柱   Maximum Banker Value (0-100)", min_value=0,
                                            value=st.session_state['criteria'].get('max_banker_value', 0), step=1)
 
         # Update criteria in session state
@@ -543,7 +543,7 @@ def main():
         if st.session_state.get('show_list', False):
             stock_list = st.session_state.get('matching_stocks', [])
             if stock_list:
-                st.write(f"Number of stocks meeting the criteria: {len(stock_list)}")
+                st.write(f"符合条件的股数量  Number of stocks meeting the criteria: {len(stock_list)}")
                 display_symbols_dropdown(stock_list)
 
         # Download button
@@ -555,7 +555,7 @@ def main():
                         file_data = file.read()
                     if file_data:
                         st.download_button(
-                            label="Download File",
+                            label="下载名单 Download List",
                             data=file_data,
                             file_name=f"filtered_result_{today_date}.txt",
                             mime="text/plain"
@@ -564,7 +564,7 @@ def main():
                     st.warning("No file available to download.")
 
         # Manual stock symbol input
-        stock_input = st.text_input("Or enter a stock symbol for chart viewing:")
+        stock_input = st.text_input("或输入股票代码以查看图表： Or enter a stock symbol for chart viewing:")
         if stock_input:
             select_stock(stock_input.strip())
             st.session_state['selected_stock'] = stock_input.strip()
