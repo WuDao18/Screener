@@ -22,6 +22,71 @@ import datetime
 folder_id = '1VqBBtvzHOb8FKVgP5r1uoRWEWltPVdeD'
 
 
+def add_custom_css():
+    st.markdown("""
+        <style>
+        div.stButton > button {
+            background-color: lightblue;
+            color: white;
+        }
+        div.stButton > button:hover {
+            background-color: blue;
+            color: white;
+        }
+        </style>
+
+        <style>
+        /* Style for the download button */
+        div.stDownloadButton > button {
+            background-color: #FF6666; 
+            color: white;
+
+        }
+        div.stDownloadButton > button:hover {
+            background-color: darkred; 
+            color: white;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+# Inject custom CSS with forceful sidebar styling
+st.markdown(
+    """
+    <style>
+    /* Expanded sidebar */
+    [data-testid="stSidebar"][aria-expanded="true"] {
+        width: 1200px !important; /* Force expanded sidebar width */
+        min-width: 1200px !important; /* Ensure minimum width */
+        transition: width 0.3s ease-in-out;
+    }
+    [data-testid="stSidebar"][aria-expanded="true"] .sidebar-content {
+        width: 1200px !important; /* Match the expanded sidebar width */
+    }
+
+    /* Minimized sidebar */
+    [data-testid="stSidebar"][aria-expanded="false"] {
+        width: 5px !important; /* Force minimized sidebar width */
+        min-width: 5px !important; /* Ensure minimum width */
+        transition: width 0.3s ease-in-out;
+    }
+    [data-testid="stSidebar"][aria-expanded="false"] .sidebar-content {
+        width: 5px !important; /* Match the minimized sidebar width */
+    }
+
+    /* Main content adjustment */
+    [data-testid="stSidebar"][aria-expanded="true"] ~ .main {
+        margin-left: 1200px !important; /* Adjust main content for expanded sidebar */
+        transition: margin-left 0.3s ease-in-out;
+    }
+    [data-testid="stSidebar"][aria-expanded="false"] ~ .main {
+        margin-left: 5px !important; /* Adjust main content for minimized sidebar */
+        transition: margin-left 0.3s ease-in-out;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 # Function to authenticate and return the Google API service
 def authenticate_drive_api():
     try:
@@ -126,6 +191,11 @@ def load_stock_data(stock_symbol, folder_id):
         return None
     return download_file(service, file_to_download['id'])
 
+def display_symbols_dropdown(symbols):
+    selected_stock = st.selectbox("Select a stock to view the chart:", options=symbols)
+    if st.button("看图表 Show Chart"):
+        select_stock(selected_stock)
+        st.session_state['selected_stock'] = selected_stock
 
 def display_symbols_in_columns(symbols):
     """
@@ -262,7 +332,7 @@ def display_chart(stock_symbol):
         df['datetime'] = pd.to_datetime(df['datetime'])
 
         # Filter to keep only the last 60 rows
-        df = df.tail(60)
+        df = df.tail(100)
 
         # Create a full range of dates from the minimum to the maximum date in your data
         all_dates = pd.date_range(start=df['datetime'].min(), end=df['datetime'].max())
@@ -351,7 +421,7 @@ def display_chart(stock_symbol):
         )
 
         fig.update_layout(
-            title=f"三个月走势图 {stock_symbol}",
+            title=f"九个月走势图 {stock_symbol}",
             xaxis=dict(
                 title=None,
                 showgrid=False,
@@ -375,6 +445,7 @@ def display_chart(stock_symbol):
 
 def main():
     st.title("选股平台")
+    add_custom_css()
     # Initialize the number of matching stocks
     num_matching_stocks = 0
     temp_file_path = None
@@ -462,7 +533,7 @@ def main():
 
                         if matching_symbols:
                             st.session_state['show_list'] = True
-                            st.success("Matching stocks are found!")
+                            #st.success("Matching stocks are found!")
                         else:
                             st.warning("No stocks found matching all selected criteria.")
                     else:
@@ -475,7 +546,7 @@ def main():
             stock_list = st.session_state.get('matching_stocks', [])
             if stock_list:
                 st.write(f"Number of stocks meeting the criteria: {len(stock_list)}")
-                display_symbols_in_columns(stock_list)
+                display_symbols_dropdown(stock_list)
 
         # Download button
         with col6:
@@ -499,6 +570,31 @@ def main():
         if st.button("Submit Stock") and stock_input:
             select_stock(stock_input.strip())
             st.session_state['selected_stock'] = stock_input.strip()
+
+        # Define a mapping for display labels
+        criteria_labels = {
+            "rainbow": "彩图",
+            "n1": "牛一",
+            "y1": "第一黄柱",
+            "zj": "资金所向",
+            "qs": "趋势专家",
+            "min_volume": "Min Volume in 100k",
+            "min_price": "Min Price",
+            "min_banker_value": "Min Banker Value",
+            "max_banker_value": "Max Banker Value",
+        }
+
+        # Display selected criteria in the sidebar without extra spacing
+        st.sidebar.markdown("""
+            <h3 style='color:blue; font-family:sans-serif; text-decoration:underline;'>已选条件 Selected Criteria</h3>
+        """, unsafe_allow_html=True)
+        criteria = st.session_state.get('criteria', {})
+        if criteria:
+            selected_criteria = "".join(
+                f"<div style='line-height:1.2'><b>{criteria_labels.get(key, key.replace('_', ' ').capitalize())}:</b> {value}</div>"
+                for key, value in criteria.items() if value
+            )
+            st.sidebar.markdown(selected_criteria, unsafe_allow_html=True)
 
         # Display selected stock chart
         if st.session_state['selected_stock']:
