@@ -49,18 +49,17 @@ def add_custom_css():
         </style>
     """, unsafe_allow_html=True)
 
-# Inject custom CSS with forceful sidebar styling
 st.markdown(
     """
     <style>
     /* Expanded sidebar */
     [data-testid="stSidebar"][aria-expanded="true"] {
-        width: 1200px !important; /* Force expanded sidebar width */
-        min-width: 1200px !important; /* Ensure minimum width */
+        width: 800px !important; /* Force expanded sidebar width */
+        min-width: 800px !important; /* Ensure minimum width */
         transition: width 0.3s ease-in-out;
     }
     [data-testid="stSidebar"][aria-expanded="true"] .sidebar-content {
-        width: 1200px !important; /* Match the expanded sidebar width */
+        width: 800px !important; /* Match the expanded sidebar width */
     }
 
     /* Minimized sidebar */
@@ -75,7 +74,7 @@ st.markdown(
 
     /* Main content adjustment */
     [data-testid="stSidebar"][aria-expanded="true"] ~ .main {
-        margin-left: 1200px !important; /* Adjust main content for expanded sidebar */
+        margin-left: 800px !important; /* Adjust main content for expanded sidebar */
         transition: margin-left 0.3s ease-in-out;
     }
     [data-testid="stSidebar"][aria-expanded="false"] ~ .main {
@@ -86,7 +85,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
 # Function to authenticate and return the Google API service
 def authenticate_drive_api():
     try:
@@ -435,7 +433,7 @@ def display_chart(stock_symbol):
         )
 
         # Display the static plotly chart in Streamlit
-        st.plotly_chart(fig, use_container_width=True, config={
+        st.sidebar.plotly_chart(fig, use_container_width=True, config={
             'displayModeBar': False,  # Disable the mode bar entirely
             'staticPlot': True  # Make the chart static and non-interactive
         })
@@ -567,7 +565,7 @@ def main():
 
         # Manual stock symbol input
         stock_input = st.text_input("Or enter a stock symbol for chart viewing:")
-        if st.button("Submit Stock") and stock_input:
+        if stock_input:
             select_stock(stock_input.strip())
             st.session_state['selected_stock'] = stock_input.strip()
 
