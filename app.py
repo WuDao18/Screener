@@ -17,7 +17,7 @@ from io import BytesIO
 import datetime
 
 # Google Drive API scope
-#SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
+# SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
 folder_id = '1VqBBtvzHOb8FKVgP5r1uoRWEWltPVdeD'
 
@@ -48,6 +48,7 @@ def add_custom_css():
         }
         </style>
     """, unsafe_allow_html=True)
+
 
 st.markdown(
     """
@@ -85,6 +86,8 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+
 # Function to authenticate and return the Google API service
 def authenticate_drive_api():
     try:
@@ -98,7 +101,7 @@ def authenticate_drive_api():
 
         # Use the credentials to authorize and build the service
         service = build('drive', 'v3', credentials=credentials)
-        #st.text(service)
+        # st.text(service)
         return service
 
     except Exception as e:
@@ -134,10 +137,11 @@ def list_files_in_folder(service, folder_id):
         print(f"An error occurred: {e}")
         return []
 
+
 def download_file(service, file_id):
     """Download a file from Google Drive and return its content as a DataFrame."""
     try:
-        #st.text(f"Starting download of file with ID: {file_id}")
+        # st.text(f"Starting download of file with ID: {file_id}")
 
         # Request to download the file
         request = service.files().get_media(fileId=file_id)
@@ -147,17 +151,17 @@ def download_file(service, file_id):
         done = False
         while not done:
             status, done = downloader.next_chunk()  # Progress indicator
-           # st.text(f"Download progress: {int(status.progress() * 100)}%")
+        # st.text(f"Download progress: {int(status.progress() * 100)}%")
 
         # After download, check the size of the file
-        #st.text(f"Download completed. File size: {file_content.getbuffer().nbytes} bytes.")
+        # st.text(f"Download completed. File size: {file_content.getbuffer().nbytes} bytes.")
 
         # Ensure we are correctly reading the file content into a DataFrame
         file_content.seek(0)  # Reset the file pointer to the beginning after download
         try:
-            #st.text("Attempting to read the file into a DataFrame...")
+            # st.text("Attempting to read the file into a DataFrame...")
             df = pd.read_excel(file_content, engine='openpyxl')
-            #st.text("File read successfully into DataFrame.")
+            # st.text("File read successfully into DataFrame.")
             return df
         except Exception as e:
             st.text(f"Error reading the Excel file: {e}")
@@ -189,11 +193,13 @@ def load_stock_data(stock_symbol, folder_id):
         return None
     return download_file(service, file_to_download['id'])
 
+
 def display_symbols_dropdown(symbols):
     selected_stock = st.selectbox("请选择一只股票查看图表： Select a stock to view the chart:", options=symbols)
     if st.button("看图表 Show Chart"):
         select_stock(selected_stock)
         st.session_state['selected_stock'] = selected_stock
+
 
 def display_symbols_in_columns(symbols):
     """
@@ -205,7 +211,7 @@ def display_symbols_in_columns(symbols):
     # Number of columns
     num_columns = 2
     # Calculate how many symbols should go in each column
-    columns = st.columns([1,1])
+    columns = st.columns([1, 1])
 
     # Distribute the symbols across the columns
     symbols_per_column = len(symbols) // num_columns
@@ -278,45 +284,45 @@ def check_indicators_and_save(df, min_volume, min_price, min_banker_value, max_b
         return [], None
 
 
-# Function to calculate fund flow
-def calculate_fund_flow(df):
-    close_prices = df['close']
+def weight(values, length):
+    wma = values.rolling(window=length).apply(
+        lambda x: np.sum(x * np.arange(1, len(x) + 1)) / np.sum(np.arange(1, len(x) + 1)))
+    sma = values.rolling(window=length).mean()
+    return wma * 3 - sma * 2
 
-    def ema(series, span):
-        return series.ewm(span=span, adjust=False).mean()
 
-    def sma(series, span):
-        return series.rolling(window=span).mean()
+def calculate_trend_data(df):
+    # Calculate price trend
+    price_trend = (df['close'] * 3 + df['open'] * 2 + df['low'] + df['high']) / 7
 
-    fast_ma = ema(close_prices, 4)
-    slow_ma = ema(close_prices, 20)
-    macd = fast_ma - slow_ma
-    signal = ema(macd, 21)
+    if len(price_trend) < 68:  # Ensure enough data points for the largest span
+        print("Insufficient data for trend calculations.")
+        return None, None, None, None, None
 
-    fast_ma_c = ema(macd, 3)
-    slow_ma_c = sma(macd, 6)
+    # Calculate moving averages
+    trend_ma = price_trend.ewm(span=3, adjust=False).mean()
+    weight_ma = weight(trend_ma, 6)
 
-    higher = np.zeros(len(df))
-    lower = np.zeros(len(df))
-    palette = []
+    # Calculate trendline
+    ema_21 = price_trend.ewm(span=21, adjust=False).mean()
+    ema_34 = price_trend.ewm(span=34, adjust=False).mean()
+    ema_68 = price_trend.ewm(span=68, adjust=False).mean()
+    trendline = (ema_21 + ema_34 + ema_68) / 3
 
-    for i in range(1, len(df)):
-        if fast_ma_c.iloc[i] <= slow_ma_c.iloc[i] and fast_ma_c.iloc[i - 1] >= slow_ma_c.iloc[i - 1]:
-            higher[i] = max(fast_ma_c.iloc[i], fast_ma_c.iloc[i - 1])
-            lower[i] = min(fast_ma_c.iloc[i - 1], slow_ma_c.iloc[i])
-        elif fast_ma_c.iloc[i] >= slow_ma_c.iloc[i] and fast_ma_c.iloc[i - 1] <= slow_ma_c.iloc[i - 1]:
-            higher[i] = max(fast_ma_c.iloc[i], slow_ma_c.iloc[i])
-            lower[i] = min(slow_ma_c.iloc[i - 1], slow_ma_c.iloc[i])
-        else:
-            higher[i] = max(fast_ma_c.iloc[i], slow_ma_c.iloc[i - 1])
-            lower[i] = min(fast_ma_c.iloc[i - 1], slow_ma_c.iloc[i])
+    # Calculate plot_trendline
+    plot_trendline = weight(trendline, 6)
 
-        palette.append('red' if fast_ma_c.iloc[i] >= slow_ma_c.iloc[i] else 'lime')
+    paletteT = ['lime' if trendline.iloc[i] <= trendline.iloc[i - 1] else 'purple' for i in range(1, len(df))]
+    paletteT.insert(0, 'lime')  # Default for the first value
+    palette = ['red' if weight_ma.iloc[i] >= weight_ma.iloc[i - 1] else 'lime' for i in range(1, len(weight_ma))]
+    palette.insert(0, 'red')  # Default for the first value
 
-    if len(palette) < len(df):
-        palette.insert(0, 'lime')
+    # Calculate higher and lower values for candlesticks
+    higher = np.where(weight_ma >= weight_ma.shift(1), weight_ma, weight_ma.shift(1))
+    lower = np.where(weight_ma < weight_ma.shift(1), weight_ma, weight_ma.shift(1))
 
-    return higher, lower, palette, signal, slow_ma_c
+    return higher, lower, palette, plot_trendline, paletteT
+
 
 # Function to display chart
 def display_chart(stock_symbol):
@@ -329,15 +335,15 @@ def display_chart(stock_symbol):
         # Ensure 'datetime' is a pandas datetime type
         df['datetime'] = pd.to_datetime(df['datetime'])
 
-        # Filter to keep only the last 60 rows
-        df = df.tail(100)
+        # Filter to keep only the last 120 rows
+        df = df.tail(120)
 
         # Create a full range of dates from the minimum to the maximum date in your data
         all_dates = pd.date_range(start=df['datetime'].min(), end=df['datetime'].max())
 
         # Find missing dates
         missing_dates = all_dates.difference(df['datetime'])
-        higher, lower, palette, signal, slow_ma_c = calculate_fund_flow(df)
+        higher, lower, palette, plot_trendline, paletteT = calculate_trend_data(df)
 
         fig = make_subplots(
             rows=3,
@@ -374,26 +380,14 @@ def display_chart(stock_symbol):
             col=1,
         )
 
-        # Add Fund Flow indicator traces
+        # Add 趋势专家 trendline
         fig.add_trace(
             go.Scatter(
                 x=df['datetime'],
-                y=slow_ma_c,
-                line=dict(color='rgba(255, 255, 255, 0)'),
-                name="Slow MA",
-            ),
-            row=3,
-            col=1,
-        )
-
-        fig.add_trace(
-            go.Scatter(
-                x=df['datetime'],
-                y=signal,
-                fill='tonexty',
-                fillcolor='lightskyblue',
-                line=dict(color='rgba(255, 255, 255, 0)'),
-                name="Signal",
+                y=plot_trendline,
+                mode='markers',
+                marker=dict(color=paletteT, size=4),  # make dots for color change
+                name="Trendline",
             ),
             row=3,
             col=1,
@@ -419,7 +413,7 @@ def display_chart(stock_symbol):
         )
 
         fig.update_layout(
-            title=f"九个月走势图 {stock_symbol}",
+            title=f"六个月走势图 6 Months Chart Viewer {stock_symbol}",
             xaxis=dict(
                 title=None,
                 showgrid=False,
@@ -427,7 +421,7 @@ def display_chart(stock_symbol):
             ),
             yaxis=dict(title="股价", side="left"),
             yaxis2=dict(title="交易量", side="left"),
-            yaxis3=dict(title="资金所向", side="left"),
+            yaxis3=dict(title="趋势专家", side="left"),
             height=800,
             showlegend=False,
         )
@@ -441,11 +435,11 @@ def display_chart(stock_symbol):
     except Exception as e:
         st.error(f"An error occurred while creating the chart: {e}")
 
+
 def main():
     st.title("选股平台 Stock Screener")
     add_custom_css()
     # Initialize the number of matching stocks
-    num_matching_stocks = 0
     temp_file_path = None
 
     if 'logged_in' not in st.session_state:
@@ -456,20 +450,36 @@ def main():
         st.session_state['criteria'] = {}
         st.session_state['matching_stocks'] = []
         st.session_state['temp_file_path'] = None
+
     USER_CREDENTIALS = {"user1": "123", "user2": "456", "admin": "admin123"}
+
+    if 'login_error' not in st.session_state:
+        st.session_state['login_error'] = False
 
     if not st.session_state['logged_in']:
         with st.form("login_form"):
             username = st.text_input("Username")
             password = st.text_input("Password", type="password")
             login_button = st.form_submit_button("登入 Login")
-            if login_button and username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
-                st.session_state['logged_in'] = True
-                st.session_state['username'] = username
-                st.success(f"Welcome, {username}!")
-    else:
-        st.sidebar.button("登出 Logout", on_click=lambda: st.session_state.update({'logged_in': False, 'username': "", 'selected_stock': None, 'show_list': False}))
 
+            if login_button:
+                # Process login attempt
+                if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
+                    st.session_state['logged_in'] = True
+                    st.session_state['username'] = username
+                    st.session_state['login_error'] = False  # Reset error flag
+                    st.success(f"Welcome, {username}!")
+                else:
+                    st.session_state['login_error'] = True  # Set error flag
+            else:
+                st.session_state['login_error'] = False  # Reset error flag on page load
+
+        # Display error only if the login button was clicked and credentials are wrong
+        if st.session_state['login_error']:
+            st.error("Incorrect username or password. Please try again.")
+    else:
+        st.sidebar.button("登出 Logout", on_click=lambda: st.session_state.update(
+            {'logged_in': False, 'username': "", 'selected_stock': None, 'show_list': False}))
 
         # Checkboxes for indicators
         st.write("选股条件（股票必须满足所有条件）：")
@@ -486,10 +496,11 @@ def main():
             zj_selected = st.checkbox("资金所向", key="zj_check", value=st.session_state['criteria'].get('zj', False))
             qs_selected = st.checkbox("趋势专家", key="qs_check", value=st.session_state['criteria'].get('qs', False))
 
-        #st.write("Filter by user-defined values (optional):")
+        # st.write("Filter by user-defined values (optional):")
 
         # Input fields for filters
-        min_volume = st.number_input("最低成交量为 100,000 的倍数   Minimum Volume as a multiple of 100,000", min_value=0,
+        min_volume = st.number_input("最低成交量为 100,000 的倍数   Minimum Volume as a multiple of 100,000",
+                                     min_value=0,
                                      value=st.session_state['criteria'].get('min_volume', 0), step=1)
         min_price = st.number_input("最低股价   Minimum Stock Price", min_value=0.0,
                                     value=st.session_state['criteria'].get('min_price', 0.0), step=0.1)
@@ -531,7 +542,7 @@ def main():
 
                         if matching_symbols:
                             st.session_state['show_list'] = True
-                            #st.success("Matching stocks are found!")
+                            # st.success("Matching stocks are found!")
                         else:
                             st.warning("No stocks found matching all selected criteria.")
                     else:
@@ -598,6 +609,7 @@ def main():
         if st.session_state['selected_stock']:
             display_stock = st.session_state['selected_stock'].replace('MYX:', '')
             display_chart(display_stock)
+
 
 if __name__ == "__main__":
     main()
