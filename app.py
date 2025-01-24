@@ -24,7 +24,7 @@ from email.utils import formataddr
 folder_id = '1VqBBtvzHOb8FKVgP5r1uoRWEWltPVdeD'
 
 if not firebase_admin._apps:
-    firebase_creds = st.secrets["firebase_credentials"]
+    firebase_creds = dict(st.secrets["firebase_credentials"])
     cred = credentials.Certificate(firebase_creds)
     firebase_admin.initialize_app(cred)
 
