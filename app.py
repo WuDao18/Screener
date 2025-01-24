@@ -555,6 +555,18 @@ def main():
     # Initialize the number of matching stocks
     temp_file_path = None
 
+    if 'logged_in' and 'otp_sent' not in st.session_state:
+        st.session_state['logged_in'] = False
+        st.session_state['email'] = ""
+        st.session_state['selected_stock'] = None
+        st.session_state['show_list'] = False
+        st.session_state['criteria'] = {}
+        st.session_state['matching_stocks'] = []
+        st.session_state['temp_file_path'] = None
+        st.session_state['user_id'] = None
+        st.session_state['otp_sent'] = False  # Track if OTP has been sent
+        st.session_state["verified"] = False
+
     if not st.session_state["logged_in"]:
         st.subheader("Login")
 
