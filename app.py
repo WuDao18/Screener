@@ -4,23 +4,131 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
 import tempfile
-import os
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-from google.auth.transport.requests import Request
 from googleapiclient.http import MediaIoBaseDownload
 from googleapiclient.errors import HttpError
-import json
 from google.oauth2 import service_account
 from io import BytesIO
-import datetime
+import firebase_admin
+from firebase_admin import credentials, auth,firestore
+from datetime import datetime, timedelta
+import random
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.utils import formataddr
 
 # Google Drive API scope
 # SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
 
 folder_id = '1VqBBtvzHOb8FKVgP5r1uoRWEWltPVdeD'
 
+if not firebase_admin._apps:
+    firebase_creds = st.secrets["firebase_credentials"]
+    cred = credentials.Certificate(firebase_creds)
+    firebase_admin.initialize_app(cred)
+
+db = firestore.client()
+print("Firebase initialized successfully!")
+
+def send_email(email, otp):
+    """Send OTP to user's email using SMTP."""
+    try:
+        # Email configuration
+        sender_email = "wudao.gudaofang@gmail.com"  # Replace with your email
+        sender_name = "Screener"
+        sender_password = "ghzj hdqu eegi olcw"  # Replace with app password or email password
+        smtp_server = "smtp.gmail.com"  # For Gmail; change if using another email service
+        smtp_port = 587  # For TLS
+
+        # Compose the email
+        subject = "Your OTP for Login"
+        body = f"""
+        Dear User,
+
+        Your One-Time Password (OTP) for Stock Screener is: {otp}
+
+        This OTP is valid for 5 minutes. Please do not share it with anyone.
+
+        Regards,
+        My Screener
+        """
+        msg = MIMEMultipart()
+        msg['From'] = formataddr((sender_name, sender_email))
+        msg['To'] = email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'plain'))
+
+        # Send the email
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()  # Start TLS encryption
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, email, msg.as_string())
+        server.quit()
+
+        print(f"OTP sent successfully to {email}")
+    except Exception as e:
+        print(f"Error sending email: {e}")
+
+def generate_otp():
+    """Generate a 6-digit random OTP."""
+    return f"{random.randint(100000, 999999)}"
+
+def send_otp(user_id, email):
+    """Generate and store OTP, then send it to the user's email."""
+    global db
+
+    try:
+        otp = generate_otp()
+        expiration_time = datetime.utcnow() + timedelta(minutes=5)
+
+        # Store OTP in Firestore
+        otp_data = {
+            "otp": otp,
+            "expiration_time": expiration_time.isoformat(),
+            "verified": False
+        }
+        db.collection("otp_verifications").document(user_id).set(otp_data)
+        print(f"OTP for {email}: {otp} (stored in Firestore)")
+
+        # Send the OTP email
+        send_email(email, otp)
+        # Send OTP via Firebase Auth or Email Service
+        print(f"Send this OTP ({otp}) to {email} via your email service.")
+        return True
+
+    except Exception as e:
+        print(f"Error sending OTP: {e}")
+        return False
+
+def validate_otp(user_id, otp):
+    """Validate the OTP provided by the user."""
+    try:
+        otp_doc = db.collection("otp_verifications").document(user_id).get()
+        if not otp_doc.exists:
+            print("No OTP request found for this user.")
+            return False
+
+        otp_data = otp_doc.to_dict()
+        stored_otp = otp_data["otp"]
+        expiration_time = datetime.fromisoformat(otp_data["expiration_time"])
+
+        # Check if OTP matches and has not expired
+        if datetime.utcnow() > expiration_time:
+            print("OTP has expired.")
+            return False
+
+        if otp == stored_otp:
+            # Mark the OTP as verified
+            db.collection("otp_verifications").document(user_id).update({"verified": True})
+            print("OTP validated successfully!")
+            return True
+        else:
+            print("Invalid OTP.")
+            return False
+    except Exception as e:
+        print(f"Error validating OTP: {e}")
+        return False
 
 def add_custom_css():
     st.markdown("""
@@ -435,6 +543,11 @@ def display_chart(stock_symbol):
     except Exception as e:
         st.error(f"An error occurred while creating the chart: {e}")
 
+def logout_user():
+    """Reset session state and log the user out."""
+    for key in ['logged_in', 'otp_sent', 'verified', 'user_id']:
+        st.session_state[key] = False  # Reset all login-related states
+    st.session_state['email'] = ""  # Clear the email input
 
 def main():
     st.title("选股平台 Stock Screener")
@@ -442,45 +555,46 @@ def main():
     # Initialize the number of matching stocks
     temp_file_path = None
 
-    if 'logged_in' not in st.session_state:
-        st.session_state['logged_in'] = False
-        st.session_state['username'] = ""
-        st.session_state['selected_stock'] = None
-        st.session_state['show_list'] = False
-        st.session_state['criteria'] = {}
-        st.session_state['matching_stocks'] = []
-        st.session_state['temp_file_path'] = None
+    if not st.session_state["logged_in"]:
+        st.subheader("Login")
 
-    USER_CREDENTIALS = {"user1": "123", "user2": "456", "admin": "admin123"}
+        # Input for user email
+        email = st.text_input("Email", key="email_input")
 
-    if 'login_error' not in st.session_state:
-        st.session_state['login_error'] = False
+        # step 1: send OTP handling
+        if not st.session_state["otp_sent"]:
+            if st.button("Send OTP"):
+                # Send OTP to user's email
+                try:
+                    user = auth.get_user_by_email(email)  # Check if user exists
+                    user_id = user.uid  # Get the user ID from Firebase
+                    send_otp(user_id, email)  # Call the function to send OTP
+                    st.session_state["otp_sent"] = True
+                    st.session_state["user_id"] = user_id
+                    st.success("OTP sent to your email. Please check your inbox.")
+                    st.button("OK")
+                except firebase_admin.auth.UserNotFoundError:
+                    st.error("Email not found. Please check and try again.")
+                except Exception as e:
+                    st.error(f"Error sending OTP: {e}")
 
-    if not st.session_state['logged_in']:
-        with st.form("login_form"):
-            username = st.text_input("Username")
-            password = st.text_input("Password", type="password")
-            login_button = st.form_submit_button("登入 Login")
-
-            if login_button:
-                # Process login attempt
-                if username in USER_CREDENTIALS and USER_CREDENTIALS[username] == password:
-                    st.session_state['logged_in'] = True
-                    st.session_state['username'] = username
-                    st.session_state['login_error'] = False  # Reset error flag
-                    st.success(f"Welcome, {username}!")
+        # Step 2: Verify OTP
+        elif not st.session_state["verified"]:
+            otp = st.text_input("Enter OTP", type="password")
+            if st.button("Verify OTP"):
+                if validate_otp(st.session_state["user_id"], otp):
+                    st.session_state["verified"] = True
+                    st.success("OTP verified successfully! Click 'Enter App' to proceed.")
+                    st.button("Enter App", on_click=lambda: st.session_state.update({"logged_in": True}))
                 else:
-                    st.session_state['login_error'] = True  # Set error flag
-            else:
-                st.session_state['login_error'] = False  # Reset error flag on page load
+                    st.error("Invalid or expired OTP. Please request a new OTP.")
+                    # Reset the OTP flow to allow retry
+                    st.button("Resend new OTP")
+                    st.session_state["otp_sent"] = False
+                    st.session_state["user_id"] = None
 
-        # Display error only if the login button was clicked and credentials are wrong
-        if st.session_state['login_error']:
-            st.error("Incorrect username or password. Please try again.")
     else:
-        st.sidebar.button("登出 Logout", on_click=lambda: st.session_state.update(
-            {'logged_in': False, 'username': "", 'selected_stock': None, 'show_list': False}))
-
+        st.sidebar.button("Logout", on_click=logout_user)
         # Checkboxes for indicators
         st.write("选股条件（股票必须满足所有条件）：")
         st.write("Select indicators (stocks must meet all selected criteria):")
