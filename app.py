@@ -686,7 +686,7 @@ def main():
         # Download button
         with col6:
             if st.session_state.get('temp_file_path'):
-                today_date = datetime.datetime.now().strftime('%d%m%y')
+                today_date = datetime.now().strftime('%d%m%y')
                 try:
                     with open(st.session_state['temp_file_path'], "r") as file:
                         file_data = file.read()
