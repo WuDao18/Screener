@@ -31,80 +31,70 @@ if not firebase_admin._apps:
 db = firestore.client()
 print("Firebase initialized successfully!")
 
-def send_email(email, otp):
-    """Send OTP to user's email using SMTP."""
-    try:
-        # Email configuration
-        sender_email = "wudao.gudaofang@gmail.com"  # Replace with your email
-        sender_name = "Screener"
-        sender_password = "ghzj hdqu eegi olcw"  # Replace with app password or email password
-        smtp_server = "smtp.gmail.com"  # For Gmail; change if using another email service
-        smtp_port = 587  # For TLS
+# def send_email(email, otp):
+#     """Send OTP to user's email using SMTP."""
+#     try:
+#         # Email configuration
+#         sender_email = "wudao.gudaofang@gmail.com"  # Replace with your email
+#         sender_name = "Screener"
+#         sender_password = "ghzj hdqu eegi olcw"  # Replace with app password or email password
+#         smtp_server = "smtp.gmail.com"  # For Gmail; change if using another email service
+#         smtp_port = 587  # For TLS
+#
+#         # Compose the email
+#         subject = "Your OTP for Login"
+#         body = f"""
+#         Dear User,
+#
+#         Your One-Time Password (OTP) for Stock Screener is: {otp}
+#
+#         This OTP is valid for 5 minutes. Please do not share it with anyone.
+#
+#         Regards,
+#         My Screener
+#         """
+#         msg = MIMEMultipart()
+#         msg['From'] = formataddr((sender_name, sender_email))
+#         msg['To'] = email
+#         msg['Subject'] = subject
+#         msg.attach(MIMEText(body, 'plain'))
+#
+#         # Send the email
+#         server = smtplib.SMTP(smtp_server, smtp_port)
+#         server.starttls()  # Start TLS encryption
+#         server.login(sender_email, sender_password)
+#         server.sendmail(sender_email, email, msg.as_string())
+#         server.quit()
+#
+#         print(f"OTP sent successfully to {email}")
+#     except Exception as e:
+#         print(f"Error sending email: {e}")
 
-        # Compose the email
-        subject = "Your OTP for Login"
-        body = f"""
-        Dear User,
-
-        Your One-Time Password (OTP) for Stock Screener is: {otp}
-
-        This OTP is valid for 5 minutes. Please do not share it with anyone.
-
-        Regards,
-        My Screener
-        """
-        msg = MIMEMultipart()
-        msg['From'] = formataddr((sender_name, sender_email))
-        msg['To'] = email
-        msg['Subject'] = subject
-        msg.attach(MIMEText(body, 'plain'))
-
-        # Send the email
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()  # Start TLS encryption
-        server.login(sender_email, sender_password)
-        server.sendmail(sender_email, email, msg.as_string())
-        server.quit()
-
-        print(f"OTP sent successfully to {email}")
-    except Exception as e:
-        print(f"Error sending email: {e}")
-
-def generate_otp():
-    """Generate a 6-digit random OTP."""
-    return f"{random.randint(100000, 999999)}"
-
-def send_otp(user_id, email):
+def send_otp(email):
     """Generate and store OTP, then send it to the user's email."""
-    global db
+    user_ref = db.collection("users").document(email)
+    user = user_ref.get()
 
-    try:
-        otp = generate_otp()
-        expiration_time = datetime.utcnow() + timedelta(minutes=5)
+    if user.exists:
+        otp = str(random.randint(100000, 999999))  # Generate a 6-digit OTP
+        expiration_time = datetime.now() + timedelta(minutes=5)  # OTP valid for 5 minutes
 
-        # Store OTP in Firestore
-        otp_data = {
+        # ✅ Store OTP with email as document ID
+        otp_ref = db.collection("otp_verifications").document(email)
+        otp_ref.set({
             "otp": otp,
             "expiration_time": expiration_time.isoformat(),
             "verified": False
-        }
-        db.collection("otp_verifications").document(user_id).set(otp_data)
-        print(f"OTP for {email}: {otp} (stored in Firestore)")
+        })
 
-        # Send the OTP email
-        send_email(email, otp)
-        # Send OTP via Firebase Auth or Email Service
-        print(f"Send this OTP ({otp}) to {email} via your email service.")
-        return True
+        st.success("OTP generated! Please check Telegram to receive it.")
+    else:
+        st.error("Email not found in Firestore. Please register first.")
 
-    except Exception as e:
-        print(f"Error sending OTP: {e}")
-        return False
-
-def validate_otp(user_id, otp):
+def validate_otp(email, otp):
     """Validate the OTP provided by the user."""
     try:
-        otp_doc = db.collection("otp_verifications").document(user_id).get()
+        otp_doc = db.collection("otp_verifications").document(email).get()
         if not otp_doc.exists:
             print("No OTP request found for this user.")
             return False
@@ -114,13 +104,13 @@ def validate_otp(user_id, otp):
         expiration_time = datetime.fromisoformat(otp_data["expiration_time"])
 
         # Check if OTP matches and has not expired
-        if datetime.utcnow() > expiration_time:
+        if datetime.now() > expiration_time:
             print("OTP has expired.")
             return False
 
         if otp == stored_otp:
             # Mark the OTP as verified
-            db.collection("otp_verifications").document(user_id).update({"verified": True})
+            db.collection("otp_verifications").document(email).update({"verified": True})
             print("OTP validated successfully!")
             return True
         else:
@@ -579,11 +569,11 @@ def main():
                 # Send OTP to user's email
                 try:
                     user = auth.get_user_by_email(email)  # Check if user exists
-                    user_id = user.uid  # Get the user ID from Firebase
-                    send_otp(user_id, email)  # Call the function to send OTP
+                    user_id = email  # Get the user ID from Firebase
+                    send_otp(email)  # Call the function to send OTP
                     st.session_state["otp_sent"] = True
                     st.session_state["user_id"] = user_id
-                    st.success("OTP sent to your email. Please check your inbox.")
+                    st.success("OTP sent to your telegram. Please type /otp in your telegram!")
                     st.button("OK")
                 except firebase_admin.auth.UserNotFoundError:
                     st.error("Email not found. Please check and try again.")
