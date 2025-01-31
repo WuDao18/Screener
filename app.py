@@ -530,10 +530,10 @@ def main():
                     send_otp(email)  # Call the function to send OTP
                     st.session_state["otp_sent"] = True
                     st.session_state["user_id"] = user_id
-                    st.success("OTP sent to your telegram. Please type /otp in your telegram! 密码已经发出。请到 Telegram 输入 /otp 领取密码")
+                    st.success("OTP sent to your telegram. Please type /otp in your Telegram! \n密码已经发出。请到 Telegram 输入 /otp 领取密码")
                     st.button("OK")
                 except firebase_admin.auth.UserNotFoundError:
-                    st.error("Email not found. Please check and try again. 电邮错误，请再尝试。")
+                    st.error("Email not found. Please try again. 电邮错误，请再尝试。")
                 except Exception as e:
                     st.error(f"Error sending OTP: {e}")
 
