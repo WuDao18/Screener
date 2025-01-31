@@ -492,10 +492,13 @@ def display_chart(stock_symbol):
 
 def logout_user():
     """Reset session state and log the user out."""
-    for key in ['logged_in', 'otp_sent', 'verified', 'user_id']:
+    for key in ['logged_in', 'otp_sent', 'verified', 'user_id','show_list']:
         st.session_state[key] = False  # Reset all login-related states
     st.session_state['email'] = ""  # Clear the email input
-
+    st.session_state['criteria'] = {}
+    st.session_state['selected_stock'] = None
+    st.session_state['matching_stocks'] = []
+    
 def main():
     st.title("选股平台 Stock Screener")
     add_custom_css()
