@@ -62,16 +62,16 @@ def validate_otp(email, otp):
 
         # Check if OTP matches and has not expired
         if datetime.now() > expiration_time:
-            print("OTP has expired.")
+            print("OTP has expired.密码逾期")
             return False
 
         if otp == stored_otp:
             # Mark the OTP as verified
             db.collection("otp_verifications").document(email).update({"verified": True})
-            print("OTP validated successfully!")
+            print("OTP validated successfully!成功验证！")
             return True
         else:
-            print("Invalid OTP.")
+            print("Invalid OTP. 密码错误。")
             return False
     except Exception as e:
         print(f"Error validating OTP: {e}")
@@ -539,14 +539,14 @@ def main():
 
         # Step 2: Verify OTP
         elif not st.session_state["verified"]:
-            otp = st.text_input("Enter OTP", type="password")
-            if st.button("Verify OTP"):
+            otp = st.text_input("Enter OTP 输入密码", type="password")
+            if st.button("Verify OTP 验证密码"):
                 if validate_otp(st.session_state["user_id"], otp):
                     st.session_state["verified"] = True
-                    st.success("OTP verified successfully! Click 'Enter App' to proceed. 成功验证，请按 ‘进入’ 键")
+                    st.success("OTP verified successfully! Click 'Enter App' to proceed. \n成功验证！请按 ‘进入’ 键。")
                     st.button("Enter App 进入", on_click=lambda: st.session_state.update({"logged_in": True}))
                 else:
-                    st.error("Invalid or expired OTP. Please request a new OTP.")
+                    st.error("Invalid or expired OTP. Please request a new OTP.\n密码错误/逾期,请再领取新密码。")
                     # Reset the OTP flow to allow retry
                     st.button("Resend new OTP 重新发送密码")
                     st.session_state["otp_sent"] = False
