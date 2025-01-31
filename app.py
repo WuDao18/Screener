@@ -13,10 +13,6 @@ import firebase_admin
 from firebase_admin import credentials, auth,firestore
 from datetime import datetime, timedelta
 import random
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.utils import formataddr
 
 # Google Drive API scope
 # SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
@@ -30,45 +26,6 @@ if not firebase_admin._apps:
 
 db = firestore.client()
 print("Firebase initialized successfully!")
-
-# def send_email(email, otp):
-#     """Send OTP to user's email using SMTP."""
-#     try:
-#         # Email configuration
-#         sender_email = "wudao.gudaofang@gmail.com"  # Replace with your email
-#         sender_name = "Screener"
-#         sender_password = "ghzj hdqu eegi olcw"  # Replace with app password or email password
-#         smtp_server = "smtp.gmail.com"  # For Gmail; change if using another email service
-#         smtp_port = 587  # For TLS
-#
-#         # Compose the email
-#         subject = "Your OTP for Login"
-#         body = f"""
-#         Dear User,
-#
-#         Your One-Time Password (OTP) for Stock Screener is: {otp}
-#
-#         This OTP is valid for 5 minutes. Please do not share it with anyone.
-#
-#         Regards,
-#         My Screener
-#         """
-#         msg = MIMEMultipart()
-#         msg['From'] = formataddr((sender_name, sender_email))
-#         msg['To'] = email
-#         msg['Subject'] = subject
-#         msg.attach(MIMEText(body, 'plain'))
-#
-#         # Send the email
-#         server = smtplib.SMTP(smtp_server, smtp_port)
-#         server.starttls()  # Start TLS encryption
-#         server.login(sender_email, sender_password)
-#         server.sendmail(sender_email, email, msg.as_string())
-#         server.quit()
-#
-#         print(f"OTP sent successfully to {email}")
-#     except Exception as e:
-#         print(f"Error sending email: {e}")
 
 def send_otp(email):
     """Generate and store OTP, then send it to the user's email."""
@@ -87,7 +44,7 @@ def send_otp(email):
             "verified": False
         })
 
-        st.success("OTP generated! Please check Telegram to receive it.")
+        #st.success("OTP generated! Please check Telegram to receive it.")
     else:
         st.error("Email not found in Firestore. Please register first.")
 
@@ -558,14 +515,14 @@ def main():
         st.session_state["verified"] = False
 
     if not st.session_state["logged_in"]:
-        st.subheader("Login")
+        st.subheader("Login 登入")
 
         # Input for user email
-        email = st.text_input("Email", key="email_input")
+        email = st.text_input("Email 电邮", key="email_input")
 
         # step 1: send OTP handling
         if not st.session_state["otp_sent"]:
-            if st.button("Send OTP"):
+            if st.button("Send OTP 发送密码"):
                 # Send OTP to user's email
                 try:
                     user = auth.get_user_by_email(email)  # Check if user exists
@@ -573,10 +530,10 @@ def main():
                     send_otp(email)  # Call the function to send OTP
                     st.session_state["otp_sent"] = True
                     st.session_state["user_id"] = user_id
-                    st.success("OTP sent to your telegram. Please type /otp in your telegram!")
+                    st.success("OTP sent to your telegram. Please type /otp in your telegram! 密码已经发出。请到 Telegram 输入 /otp 领取密码")
                     st.button("OK")
                 except firebase_admin.auth.UserNotFoundError:
-                    st.error("Email not found. Please check and try again.")
+                    st.error("Email not found. Please check and try again. 电邮错误，请再尝试。")
                 except Exception as e:
                     st.error(f"Error sending OTP: {e}")
 
@@ -586,17 +543,17 @@ def main():
             if st.button("Verify OTP"):
                 if validate_otp(st.session_state["user_id"], otp):
                     st.session_state["verified"] = True
-                    st.success("OTP verified successfully! Click 'Enter App' to proceed.")
-                    st.button("Enter App", on_click=lambda: st.session_state.update({"logged_in": True}))
+                    st.success("OTP verified successfully! Click 'Enter App' to proceed. 成功验证，请按 ‘进入’ 键")
+                    st.button("Enter App 进入", on_click=lambda: st.session_state.update({"logged_in": True}))
                 else:
                     st.error("Invalid or expired OTP. Please request a new OTP.")
                     # Reset the OTP flow to allow retry
-                    st.button("Resend new OTP")
+                    st.button("Resend new OTP 重新发送密码")
                     st.session_state["otp_sent"] = False
                     st.session_state["user_id"] = None
 
     else:
-        st.sidebar.button("Logout", on_click=logout_user)
+        st.sidebar.button("Logout 登出", on_click=logout_user)
         # Checkboxes for indicators
         st.write("选股条件（股票必须满足所有条件）：")
         st.write("Select indicators (stocks must meet all selected criteria):")
