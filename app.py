@@ -530,7 +530,8 @@ def main():
                     send_otp(email)  # Call the function to send OTP
                     st.session_state["otp_sent"] = True
                     st.session_state["user_id"] = user_id
-                    st.success("OTP sent to your telegram. Please type /otp in your Telegram! \n密码已经发出。请到 Telegram 输入 /otp 领取密码")
+                    st.success("""OTP sent to your telegram. Please type /otp in your Telegram. 
+                    密码已经发出。请到 Telegram 输入 /otp 领取密码。""")
                     st.button("OK")
                 except firebase_admin.auth.UserNotFoundError:
                     st.error("Email not found. Please try again. 电邮错误，请再尝试。")
@@ -543,7 +544,8 @@ def main():
             if st.button("Verify OTP 验证密码"):
                 if validate_otp(st.session_state["user_id"], otp):
                     st.session_state["verified"] = True
-                    st.success("OTP verified successfully! Click 'Enter App' to proceed. \n成功验证！请按 ‘进入’ 键。")
+                    st.success("""OTP verified successfully! Click 'Enter App' to proceed. 
+                               验证成功！请按 ‘进入’ 键。""")
                     st.button("Enter App 进入", on_click=lambda: st.session_state.update({"logged_in": True}))
                 else:
                     st.error("Invalid or expired OTP. Please request a new OTP.\n密码错误/逾期,请再领取新密码。")
