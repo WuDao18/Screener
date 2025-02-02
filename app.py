@@ -4,20 +4,11 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
 import tempfile
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload
-from googleapiclient.errors import HttpError
-from google.oauth2 import service_account
-from io import BytesIO
 import firebase_admin
 from firebase_admin import credentials, auth,firestore
 from datetime import datetime, timedelta
 import random
 
-# Google Drive API scope
-# SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
-
-folder_id = '1VqBBtvzHOb8FKVgP5r1uoRWEWltPVdeD'
 
 if not firebase_admin._apps:
     firebase_creds = dict(st.secrets["firebase_credentials"])
@@ -142,152 +133,48 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+def download_file():
+    """Retrieve all stock data from the `screened_result` collection and return as a DataFrame."""
+    collection_ref = db.collection("screened_result")
+    docs = collection_ref.stream()
 
-# Function to authenticate and return the Google API service
-def authenticate_drive_api():
-    try:
-        # Load the credentials from Streamlit secrets (no need for json.loads)
-        service_account_info = st.secrets["google_credentials"]
+    stock_list = []
+    for doc in docs:
+        stock_data = doc.to_dict()
+        stock_list.append(stock_data)
 
-        # Create credentials using the service account info and the specified SCOPES
-        credentials = service_account.Credentials.from_service_account_info(
-            service_account_info, scopes=['https://www.googleapis.com/auth/drive.readonly']
-        )
-
-        # Use the credentials to authorize and build the service
-        service = build('drive', 'v3', credentials=credentials)
-        # st.text(service)
-        return service
-
-    except Exception as e:
-        st.error(f"Error during authentication: {e}")
+    if not stock_list:
+        print("No data found in Firestore collection: screened_result.")
         return None
 
+    # Convert list of stock data to Pandas DataFrame
+    df = pd.DataFrame(stock_list)
+    return df
 
-def list_files_in_folder(service, folder_id):
-    """Lists all files in a specified Google Drive folder, handling pagination."""
-    try:
-        files = []
-        page_token = None
+def load_stock_data(stock_symbol):
+    """Load stock data from Firestore and return a Pandas DataFrame."""
+    doc_ref = db.collection("stocks").document(stock_symbol)  # Reference to Firestore document
+    doc = doc_ref.get()  # Retrieve document
 
-        while True:
-            # Create the query to list the files in the specified folder
-            query = f"'{folder_id}' in parents"
-
-            # Call the Drive API to list the files in the folder
-            response = service.files().list(q=query, pageSize=100, fields="nextPageToken, files(id, name)",
-                                            pageToken=page_token).execute()
-
-            # Add the files from the current page to the list
-            files.extend(response.get('files', []))
-
-            # Check if there is a nextPageToken, which means there are more files to fetch
-            page_token = response.get('nextPageToken')
-            if not page_token:
-                break  # No more pages, stop the loop
-
-        return files
-
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return []
-
-
-def download_file(service, file_id):
-    """Download a file from Google Drive and return its content as a DataFrame."""
-    try:
-        # st.text(f"Starting download of file with ID: {file_id}")
-
-        # Request to download the file
-        request = service.files().get_media(fileId=file_id)
-        file_content = BytesIO()  # Create an in-memory file buffer
-        downloader = MediaIoBaseDownload(file_content, request)
-
-        done = False
-        while not done:
-            status, done = downloader.next_chunk()  # Progress indicator
-        # st.text(f"Download progress: {int(status.progress() * 100)}%")
-
-        # After download, check the size of the file
-        # st.text(f"Download completed. File size: {file_content.getbuffer().nbytes} bytes.")
-
-        # Ensure we are correctly reading the file content into a DataFrame
-        file_content.seek(0)  # Reset the file pointer to the beginning after download
-        try:
-            # st.text("Attempting to read the file into a DataFrame...")
-            df = pd.read_excel(file_content, engine='openpyxl')
-            # st.text("File read successfully into DataFrame.")
+    if doc.exists:
+        stock_data = doc.to_dict().get("data", [])  # Get the 'data' list
+        if stock_data:
+            df = pd.DataFrame(stock_data)  # Convert list of dictionaries to DataFrame
+            df["date"] = pd.to_datetime(df["date"])  # Ensure date is in datetime format
+            df = df.set_index("date")  # Set 'date' as the index
             return df
-        except Exception as e:
-            st.text(f"Error reading the Excel file: {e}")
+        else:
+            st.error(f"No data available for {stock_symbol}.")
             return None
-    except HttpError as error:
-        st.text(f"Google Drive API Error: {error}")
+    else:
+        st.error(f"Stock {stock_symbol} not found in Firestore.")
         return None
-    except Exception as e:
-        st.text(f"General error occurred during file download or processing: {e}")
-        return None
-
-
-def load_stock_data(stock_symbol, folder_id):
-    service = authenticate_drive_api()
-    files = list_files_in_folder(service, folder_id)
-    print(f"Found {len(files)} files in the folder.")
-    print("Files in folder:", [file['name'] for file in files])
-    # Log the stock symbol to see if it's passed correctly
-    print(f"Looking for file: {stock_symbol}_div.xlsx")
-
-    if not files:
-        return None
-
-    file_to_download = next((file for file in files if file['name'].lower() == f"{stock_symbol.lower()}_div.xlsx"),
-                            None)
-
-    if not file_to_download:
-        st.error(f"Data file for stock symbol '{stock_symbol}' not found.")
-        return None
-    return download_file(service, file_to_download['id'])
-
 
 def display_symbols_dropdown(symbols):
     selected_stock = st.selectbox("请选择一只股票查看图表： Select a stock to view the chart:", options=symbols)
     if st.button("看图表 Show Chart"):
         select_stock(selected_stock)
         st.session_state['selected_stock'] = selected_stock
-
-
-def display_symbols_in_columns(symbols):
-    """
-    Display a list of stock symbols in 3 columns and trigger stock selection on button click.
-
-    Args:
-        symbols (list): List of stock symbols to display.
-    """
-    # Number of columns
-    num_columns = 2
-    # Calculate how many symbols should go in each column
-    columns = st.columns([1, 1])
-
-    # Distribute the symbols across the columns
-    symbols_per_column = len(symbols) // num_columns
-    remaining = len(symbols) % num_columns
-
-    start_index = 0
-    for i in range(num_columns):
-        end_index = start_index + symbols_per_column + (1 if i < remaining else 0)
-        with columns[i]:
-            # Iterate through each stock symbol and display it as a button
-            for stock in symbols[start_index:end_index]:
-                stock = stock.strip()
-                if stock:  # Ensure it's not an empty string
-                    # Use an on_click for better performance
-                    if st.button(stock, key=f"btn_{stock}", on_click=select_stock, args=(stock,)):
-                        pass
-                        # Call select_stock only if a button is clicked
-                        st.session_state['page'] = "Chart Viewer"
-
-        start_index = end_index
-
 
 # Function to handle stock selection
 def select_stock(stock):
@@ -338,13 +225,10 @@ def check_indicators_and_save(df, min_volume, min_price, min_banker_value, max_b
         st.error(f"Error processing data: {str(e)}, Data type of the DataFrame: {type(df)}")
         return [], None
 
-
 def weight(values, length):
-    wma = values.rolling(window=length).apply(
-        lambda x: np.sum(x * np.arange(1, len(x) + 1)) / np.sum(np.arange(1, len(x) + 1)))
+    wma = values.rolling(window=length).apply(lambda x: np.sum(x * np.arange(1, len(x) + 1)) / np.sum(np.arange(1, len(x) + 1)))
     sma = values.rolling(window=length).mean()
     return wma * 3 - sma * 2
-
 
 def calculate_trend_data(df):
     # Calculate price trend
@@ -381,23 +265,23 @@ def calculate_trend_data(df):
 
 # Function to display chart
 def display_chart(stock_symbol):
-    df = load_stock_data(stock_symbol, '1VqBBtvzHOb8FKVgP5r1uoRWEWltPVdeD')
+    df = load_stock_data(stock_symbol)
     if df is None:
         st.error(f"No data available for the stock symbol '{stock_symbol}'. Please check the symbol or the data file.")
         return
 
     try:
         # Ensure 'datetime' is a pandas datetime type
-        df['datetime'] = pd.to_datetime(df['datetime'])
+        df['date'] = pd.to_datetime(df.index)
 
         # Filter to keep only the last 120 rows
         df = df.tail(120)
 
         # Create a full range of dates from the minimum to the maximum date in your data
-        all_dates = pd.date_range(start=df['datetime'].min(), end=df['datetime'].max())
+        all_dates = pd.date_range(start=df['date'].min(), end=df['date'].max())
 
         # Find missing dates
-        missing_dates = all_dates.difference(df['datetime'])
+        missing_dates = all_dates.difference(df['date'])
         higher, lower, palette, plot_trendline, paletteT = calculate_trend_data(df)
 
         fig = make_subplots(
@@ -411,7 +295,7 @@ def display_chart(stock_symbol):
         # Add candlestick trace
         fig.add_trace(
             go.Candlestick(
-                x=df['datetime'],
+                x=df['date'],
                 open=df['open'],
                 high=df['high'],
                 low=df['low'],
@@ -425,7 +309,7 @@ def display_chart(stock_symbol):
         # Add volume trace
         fig.add_trace(
             go.Bar(
-                x=df['datetime'],
+                x=df['date'],
                 y=df['volume'],
                 name="Volume",
                 marker_color='blue',
@@ -435,14 +319,14 @@ def display_chart(stock_symbol):
             col=1,
         )
 
-        # Add 趋势专家 trendline
+        #Add 趋势专家 trendline
         fig.add_trace(
-            go.Scatter(
-                x=df['datetime'],
-                y=plot_trendline,
-                mode='markers',
-                marker=dict(color=paletteT, size=4),  # make dots for color change
-                name="Trendline",
+             go.Scatter(
+                 x=df['date'],
+                 y=plot_trendline,
+                 mode='markers',
+                 marker=dict(color=paletteT, size=4),  # make dots for color change
+                 name="Trendline",
             ),
             row=3,
             col=1,
@@ -451,7 +335,7 @@ def display_chart(stock_symbol):
         for i in range(len(df)):
             fig.add_trace(
                 go.Scatter(
-                    x=[df['datetime'].iloc[i], df['datetime'].iloc[i]],
+                    x=[df['date'].iloc[i], df['date'].iloc[i]],
                     y=[lower[i], higher[i]],
                     mode='lines',
                     line=dict(color=palette[i], width=2),
@@ -468,7 +352,7 @@ def display_chart(stock_symbol):
         )
 
         fig.update_layout(
-            title=f"六个月走势图 6 Months Chart Viewer {stock_symbol}",
+            title=f"六个月走势图 {stock_symbol}",
             xaxis=dict(
                 title=None,
                 showgrid=False,
@@ -498,7 +382,7 @@ def logout_user():
     st.session_state['criteria'] = {}
     st.session_state['selected_stock'] = None
     st.session_state['matching_stocks'] = []
-    
+
 def main():
     st.title("选股平台 Stock Screener")
     add_custom_css()
@@ -606,9 +490,7 @@ def main():
                 st.session_state['show_list'] = False
                 try:
                     # Authenticate and download the file content (returns a DataFrame)
-                    service = authenticate_drive_api()
-                    file_id = '1dcLwOQ47kIW8NZJy0qkmQtknz6I4cTyO'
-                    file_content = download_file(service, file_id)
+                    file_content = download_file()
 
                     if isinstance(file_content, pd.DataFrame) and not file_content.empty:
                         matching_symbols, temp_file_path = check_indicators_and_save(
@@ -652,10 +534,10 @@ def main():
                     st.warning("No file available to download.")
 
         # Manual stock symbol input
-        stock_input = st.text_input("或输入股票代码以查看图表： Or enter a stock symbol for chart viewing:")
-        if stock_input:
-            select_stock(stock_input.strip())
-            st.session_state['selected_stock'] = stock_input.strip()
+        # stock_input = st.text_input("或输入股票代码以查看图表： Or enter a stock symbol for chart viewing:")
+        # if stock_input:
+        #     select_stock(stock_input.strip())
+        #     st.session_state['selected_stock'] = stock_input.strip()
 
         # Define a mapping for display labels
         criteria_labels = {
