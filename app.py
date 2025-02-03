@@ -372,9 +372,9 @@ def display_chart(stock_symbol):
                 showgrid=False,
                 rangeslider=dict(visible=False),
             ),
-            yaxis=dict(title="股价", side="left"),
-            yaxis2=dict(title="交易量", side="left"),
-            yaxis3=dict(title="趋势专家", side="left"),
+            yaxis=dict(title="股价 Price", side="left"),
+            yaxis2=dict(title="交易量 Volume", side="left"),
+            yaxis3=dict(title="趋势专家 Trend", side="left"),
             height=800,
             showlegend=False,
         )
@@ -401,8 +401,8 @@ def main():
     st.title("选股平台 Stock Screener")
     update = get_latest_date()
     # Display latest date
-    st.markdown(f"### 📅 Data Last Updated: {update}")
-    
+    st.markdown(f"### 📅 数据最后更新 Data Last Update: {update}")
+
     add_custom_css()
     # Initialize the number of matching stocks
     temp_file_path = None
@@ -420,14 +420,14 @@ def main():
         st.session_state["verified"] = False
 
     if not st.session_state["logged_in"]:
-        st.subheader("Login 登入")
+        st.subheader("登入 Login")
 
         # Input for user email
-        email = st.text_input("Email 电邮", key="email_input")
+        email = st.text_input("电邮 Email", key="email_input")
 
         # step 1: send OTP handling
         if not st.session_state["otp_sent"]:
-            if st.button("Send OTP 发送密码"):
+            if st.button("发送密码 Send OTP"):
                 # Send OTP to user's email
                 try:
                     user = auth.get_user_by_email(email)  # Check if user exists
@@ -435,31 +435,31 @@ def main():
                     send_otp(email)  # Call the function to send OTP
                     st.session_state["otp_sent"] = True
                     st.session_state["user_id"] = user_id
-                    st.success("OTP sent to your telegram. Please type /otp in your Telegram.")
                     st.success("密码已经发出。请到 Telegram 输入 /otp 领取密码。")
+                    st.success("OTP sent to your telegram. Please type /otp in your Telegram.")
                     st.button("OK")
                 except firebase_admin.auth.UserNotFoundError:
-                    st.error("Email not found. Please try again. 电邮错误，请再尝试。")
+                    st.error("电邮输入错误，请再尝试。Email not found. Please try again. ")
                 except Exception as e:
                     st.error(f"Error sending OTP: {e}")
 
         # Step 2: Verify OTP
         elif not st.session_state["verified"]:
-            otp = st.text_input("Enter OTP 输入密码", type="password")
-            if st.button("Verify OTP 验证密码"):
+            otp = st.text_input("输入密码 Enter OTP", type="password")
+            if st.button("验证密码 Verify OTP"):
                 if validate_otp(st.session_state["user_id"], otp):
                     st.session_state["verified"] = True
-                    st.success("OTP verified successfully! Click 'Enter App'. 验证成功！请按 ‘进入’ 键。")
-                    st.button("Enter App 进入", on_click=lambda: st.session_state.update({"logged_in": True}))
+                    st.success("验证成功！请按 ‘进入’ 键。 OTP verified successfully! Click 'Enter App'.")
+                    st.button("进入 Enter App", on_click=lambda: st.session_state.update({"logged_in": True}))
                 else:
-                    st.error("Invalid or expired OTP. Please request a new OTP.  密码错误/逾期,请再领取新密码。")
+                    st.error("密码错误/逾期,请再领取新密码。 Invalid or expired OTP. Please request a new OTP.")
                     # Reset the OTP flow to allow retry
-                    st.button("Resend new OTP 重新发送密码")
+                    st.button("重新发送密码 Resend new OTP")
                     st.session_state["otp_sent"] = False
                     st.session_state["user_id"] = None
 
     else:
-        st.sidebar.button("Logout 登出", on_click=logout_user)
+        st.sidebar.button("登出 Logout", on_click=logout_user)
         # Checkboxes for indicators
         st.write("选股条件（股票必须满足所有条件）：")
         st.write("Select indicators (stocks must meet all selected criteria):")
