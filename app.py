@@ -18,6 +18,17 @@ if not firebase_admin._apps:
 db = firestore.client()
 print("Firebase initialized successfully!")
 
+def get_latest_date():
+    """Fetch the last updated date from Firestore (only once)."""
+    doc_ref = db.collection("data_date").document("latest_date")
+    doc = doc_ref.get()
+
+    if doc.exists:
+      #  print(f"Last recorded date: {doc.to_dict().get('date')}")
+        return doc.to_dict().get('date')
+    else:
+        print("No date found.")
+
 def send_otp(email):
     """Generate and store OTP, then send it to the user's email."""
     user_ref = db.collection("users").document(email)
@@ -68,12 +79,14 @@ def validate_otp(email, otp):
         print(f"Error validating OTP: {e}")
         return False
 
+
 def add_custom_css():
     st.markdown("""
         <style>
         div.stButton > button {
-            background-color: lightblue;
+            background-color: #007BFF;
             color: white;
+            font-weight: bold;
         }
         div.stButton > button:hover {
             background-color: blue;
@@ -84,12 +97,13 @@ def add_custom_css():
         <style>
         /* Style for the download button */
         div.stDownloadButton > button {
-            background-color: #FF6666; 
+            background-color: #333333; 
             color: white;
+            font-weight: bold;
 
         }
         div.stDownloadButton > button:hover {
-            background-color: darkred; 
+            background-color: #555555; 
             color: white;
         }
         </style>
@@ -385,6 +399,10 @@ def logout_user():
 
 def main():
     st.title("选股平台 Stock Screener")
+    update = get_latest_date()
+    # Display latest date
+    st.markdown(f"### 📅 Data Last Updated: {update}")
+    
     add_custom_css()
     # Initialize the number of matching stocks
     temp_file_path = None
