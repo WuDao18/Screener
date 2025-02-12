@@ -539,12 +539,18 @@ def main():
             if st.session_state.get('temp_file_path'):
                 today_date = datetime.now().strftime('%d%m%y')
                 try:
+                    # Read the file content
                     with open(st.session_state['temp_file_path'], "r") as file:
-                        file_data = file.read()
-                    if file_data:
+                        file_data = file.readlines()
+
+                    # Prefix each stock symbol with "MYX:"
+                    modified_data = "\n".join([f"MYX:{line.strip()}" for line in file_data])
+
+                    # Streamlit download button
+                    if modified_data:
                         st.download_button(
                             label="下载名单 Download List",
-                            data=file_data,
+                            data=modified_data,
                             file_name=f"filtered_result_{today_date}.txt",
                             mime="text/plain"
                         )
