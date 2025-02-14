@@ -195,7 +195,7 @@ def select_stock(stock):
     st.session_state['selected_stock'] = stock
 
 
-def check_indicators_and_save(df, min_volume, min_price, min_banker_value, max_banker_value):
+def check_indicators_and_save(df, min_volume, min_price, min_banker_value, max_banker_value,rsi_min, rsi_max):
     try:
         # Initialize mask for filtering
         mask = pd.Series([True] * len(df))
@@ -221,6 +221,10 @@ def check_indicators_and_save(df, min_volume, min_price, min_banker_value, max_b
             mask &= (df['brsi'] >= min_banker_value)
         if max_banker_value:
             mask &= (df['brsi'] <= max_banker_value)
+        if rsi_min and st.session_state.get('rsi_check', False):
+            mask &= (df['rsi'] >= rsi_min)
+        if rsi_max and st.session_state.get('rsi_check', False):
+            mask &= (df['rsi'] <= rsi_max)
 
         # Get matching symbols
         matching_symbols = [str(symbol) for symbol in df[mask]['symbol'].tolist()]
@@ -475,7 +479,33 @@ def main():
             zj_selected = st.checkbox("资金所向", key="zj_check", value=st.session_state['criteria'].get('zj', False))
             qs_selected = st.checkbox("趋势专家", key="qs_check", value=st.session_state['criteria'].get('qs', False))
 
-        # st.write("Filter by user-defined values (optional):")
+            rsi_selected = st.checkbox("RSI", key="rsi_check", value=st.session_state['criteria'].get('rsi', False))
+            # Use columns to arrange inputs in one row
+            col1, col2, col3 = st.columns([0.5, 1, 0.5])  # Adjust width as needed
+            with col1:
+                # RSI Min Value Input (Disabled if checkbox is unchecked)
+                rsi_min = st.number_input(
+                    "Min RSI", min_value=0, max_value=100,
+                    value=st.session_state['criteria'].get('rsi_min', 0), step=1,
+                    disabled=not rsi_selected,
+                    label_visibility="collapsed"
+                )
+
+            with col2:
+                st.markdown("<h5 style='text-align: center;'>&lt; RSI range &lt;</h5>", unsafe_allow_html=True)
+
+            with col3:
+                # RSI Max Value Input (Disabled if checkbox is unchecked)
+                rsi_max = st.number_input(
+                    "Max RSI", min_value=0, max_value=100,
+                    value=st.session_state['criteria'].get('rsi_max', 0), step=1,
+                    disabled=not rsi_selected,
+                    label_visibility="collapsed"
+                )
+
+            if not rsi_selected:
+                rsi_min = 0
+                rsi_max = 0
 
         # Input fields for filters
         min_volume = st.number_input("最低成交量为 100,000 的倍数   Minimum Volume as a multiple of 100,000",
@@ -499,6 +529,9 @@ def main():
             'min_price': min_price,
             'min_banker_value': min_banker_value,
             'max_banker_value': max_banker_value,
+            'rsi': rsi_selected,
+            'rsi_min': rsi_min,
+            'rsi_max': rsi_max,
         }
 
         col5, col6 = st.columns([1, 1])
@@ -512,7 +545,7 @@ def main():
 
                     if isinstance(file_content, pd.DataFrame) and not file_content.empty:
                         matching_symbols, temp_file_path = check_indicators_and_save(
-                            file_content, min_volume, min_price, min_banker_value, max_banker_value)
+                            file_content, min_volume, min_price, min_banker_value, max_banker_value, rsi_min, rsi_max)
 
                         st.session_state['temp_file_path'] = temp_file_path
                         st.session_state['matching_stocks'] = matching_symbols
