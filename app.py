@@ -201,8 +201,12 @@ def check_indicators_and_save(df, min_volume, min_price, min_banker_value, max_b
         mask = pd.Series([True] * len(df))
 
         # Apply filters based on checkbox states
-        if st.session_state.get('rainbow_check', False):
-            mask &= (df['rainbow'] == 1)
+        if st.session_state.get('r1_check', False):
+            mask &= (df['r1'] == 1)
+        if st.session_state.get('r2_check', False):
+            mask &= (df['r2'] == 1)
+        if st.session_state.get('r3_check', False):
+            mask &= (df['r3'] == 1)
         if st.session_state.get('n1_check', False):
             mask &= (df['n1'] == 1)
         if st.session_state.get('y1_check', False):
@@ -470,8 +474,12 @@ def main():
         col1, col2 = st.columns(2)
 
         with col1:
-            rainbow_selected = st.checkbox("彩图", key="rainbow_check",
-                                           value=st.session_state['criteria'].get('rainbow', False))
+            r1_selected = st.checkbox("彩图均线： 5日 > 10日 > 20日", key="r1_check",
+                                           value=st.session_state['criteria'].get('r1', False))
+            r2_selected = st.checkbox("彩图均线： 20日 > 30日 > 60日", key="r2_check",
+                                           value=st.session_state['criteria'].get('r2', False))
+            r3_selected = st.checkbox("彩图均线： 60日 > 120日 > 240日", key="r3_check",
+                                           value=st.session_state['criteria'].get('r3', False))
             n1_selected = st.checkbox("牛一", key="n1_check", value=st.session_state['criteria'].get('n1', False))
             y1_selected = st.checkbox("第一黄柱", key="y1_check", value=st.session_state['criteria'].get('y1', False))
 
@@ -520,7 +528,9 @@ def main():
 
         # Update criteria in session state
         st.session_state['criteria'] = {
-            'rainbow': rainbow_selected,
+            'r1': r1_selected,
+            'r2': r2_selected,
+            'r3': r3_selected,
             'n1': n1_selected,
             'y1': y1_selected,
             'zj': zj_selected,
@@ -598,7 +608,9 @@ def main():
 
         # Define a mapping for display labels
         criteria_labels = {
-            "rainbow": "彩图",
+            "r1": "彩图均线： 5日 > 10日 > 20日",
+            "r2": "彩图均线： 20日 > 30日 > 60日",
+            "r3": "彩图均线： 60日 > 120日 > 240日",
             "n1": "牛一",
             "y1": "第一黄柱",
             "zj": "资金所向",
