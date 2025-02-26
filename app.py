@@ -213,8 +213,26 @@ def check_indicators_and_save(df, min_volume, min_price, min_banker_value, max_b
             mask &= (df['y1'] == 1)
         if st.session_state.get('zj_check', False):
             mask &= (df['zj'] == 1)
-        if st.session_state.get('qs_check', False):
+        if st.session_state.get('qs_rbpl_check', False):
             mask &= (df['qs'] == 1)
+        if st.session_state.get('qs_grb_check', False):
+            mask &= (df['qsGRB'] == 1)
+        if st.session_state.get('qs_rgb_check', False):
+            mask &= (df['qsRGB'] == 1)
+        if st.session_state.get('qs_gpl_check', False):
+            mask &= (df['qsGPL'] == 1)
+        if st.session_state.get('qs_pgl_check', False):
+            mask &= (df['qsPGL'] == 1)
+        if st.session_state.get('qs_rbd_check', False):
+            qs_selection = st.session_state.get('qs_rbd_check',0)
+            if qs_selection == 2:
+                mask &= (df['qs2R'] == 1)
+            elif qs_selection == 3:
+                mask &= (df['qs3R'] == 1)
+            elif qs_selection == 4:
+                mask &= (df['qs4R'] == 1)
+            elif qs_selection == 5:
+                mask &= (df['qs5R'] == 1)
 
         # Apply user-defined filters
         if min_volume:
@@ -474,19 +492,32 @@ def main():
         col1, col2 = st.columns(2)
 
         with col1:
+            st.write("*** 彩图均线选项 ***")
             r1_selected = st.checkbox("彩图均线： 5日 > 10日 > 20日", key="r1_check",
                                            value=st.session_state['criteria'].get('r1', False))
             r2_selected = st.checkbox("彩图均线： 20日 > 30日 > 60日", key="r2_check",
                                            value=st.session_state['criteria'].get('r2', False))
             r3_selected = st.checkbox("彩图均线： 60日 > 120日 > 240日", key="r3_check",
                                            value=st.session_state['criteria'].get('r3', False))
+            st.write("")
             n1_selected = st.checkbox("牛一", key="n1_check", value=st.session_state['criteria'].get('n1', False))
             y1_selected = st.checkbox("第一黄柱", key="y1_check", value=st.session_state['criteria'].get('y1', False))
 
         with col2:
-            zj_selected = st.checkbox("资金所向", key="zj_check", value=st.session_state['criteria'].get('zj', False))
-            qs_selected = st.checkbox("趋势专家", key="qs_check", value=st.session_state['criteria'].get('qs', False))
+            st.write("*** 趋势专家 ***")
+            qs_selected = st.checkbox("红柱紫线", key="qs_rbpl_check", value=st.session_state['criteria'].get('qsrbpl', False))
+            qsgrb_selected = st.checkbox("柱线绿变红", key="qs_grb_check",value=st.session_state['criteria'].get('qsgrb', False))
+            qsrgb_selected = st.checkbox("柱线红变绿", key="qs_rgb_check",value=st.session_state['criteria'].get('qsrgb', False))
+            qsgpl_selected = st.checkbox("主线绿变紫", key="qs_gpl_check",value=st.session_state['criteria'].get('qsgpl', False))
+            qspgl_selected = st.checkbox("主线紫变绿", key="qs_pgl_check",value=st.session_state['criteria'].get('qspgl', False))
+            qsbar_selected = st.selectbox(
+                "连续红柱天数",
+                options=[0, 2, 3, 4, 5],
+                key="qs_rbd_check"
+            )
 
+            st.write("")
+            zj_selected = st.checkbox("资金所向", key="zj_check", value=st.session_state['criteria'].get('zj', False))
             rsi_selected = st.checkbox("RSI", key="rsi_check", value=st.session_state['criteria'].get('rsi', False))
             # Use columns to arrange inputs in one row
             col1, col2, col3 = st.columns([0.5, 1, 0.5])  # Adjust width as needed
@@ -534,7 +565,12 @@ def main():
             'n1': n1_selected,
             'y1': y1_selected,
             'zj': zj_selected,
-            'qs': qs_selected,
+            'qsrbpl': qs_selected,
+            'qsrbd' : qsbar_selected,
+            'qsgrb': qsgrb_selected,
+            'qsrgb': qsrgb_selected,
+            'qsgpl': qsgpl_selected,
+            'qspgl': qspgl_selected,
             'min_volume': min_volume,
             'min_price': min_price,
             'min_banker_value': min_banker_value,
@@ -614,7 +650,12 @@ def main():
             "n1": "牛一",
             "y1": "第一黄柱",
             "zj": "资金所向",
-            "qs": "趋势专家",
+            "qsrbpl": "趋势专家 - 红柱紫线",
+            "qsgrb": "趋势专家 - 柱线绿变红",
+            "qsrgb": "趋势专家 - 柱线红变绿",
+            "qsgpl": "趋势专家 - 主线绿变紫",
+            "qspgl": "趋势专家 - 主线紫变绿",
+            "qsrbd": "趋势专家 - 连续红柱天数",
             "min_volume": "Min Volume in 100k",
             "min_price": "Min Price",
             "min_banker_value": "Min Banker Value",
