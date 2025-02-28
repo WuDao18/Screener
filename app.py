@@ -233,6 +233,20 @@ def check_indicators_and_save(df, min_volume, min_price, min_banker_value, max_b
                 mask &= (df['qs4R'] == 1)
             elif qs_selection == 5:
                 mask &= (df['qs5R'] == 1)
+        if st.session_state.get('zj_R2G_check', False):
+            mask &= (df['zjR2G'] == 1)
+        if st.session_state.get('zj_G2R_check', False):
+            mask &= (df['zjG2R'] == 1)
+        if st.session_state.get('zj_rbd_check', False):
+            qs_selection = st.session_state.get('zj_rbd_check',0)
+            if qs_selection == 2:
+                mask &= (df['zj2R'] == 1)
+            elif qs_selection == 3:
+                mask &= (df['zj3R'] == 1)
+            elif qs_selection == 4:
+                mask &= (df['zj4R'] == 1)
+            elif qs_selection == 5:
+                mask &= (df['zj5R'] == 1)
 
         # Apply user-defined filters
         if min_volume:
@@ -492,32 +506,56 @@ def main():
         col1, col2 = st.columns(2)
 
         with col1:
-            st.write("*** 彩图均线选项 ***")
-            r1_selected = st.checkbox("彩图均线： 5日 > 10日 > 20日", key="r1_check",
-                                           value=st.session_state['criteria'].get('r1', False))
-            r2_selected = st.checkbox("彩图均线： 20日 > 30日 > 60日", key="r2_check",
-                                           value=st.session_state['criteria'].get('r2', False))
-            r3_selected = st.checkbox("彩图均线： 60日 > 120日 > 240日", key="r3_check",
-                                           value=st.session_state['criteria'].get('r3', False))
-            st.write("")
-            n1_selected = st.checkbox("牛一", key="n1_check", value=st.session_state['criteria'].get('n1', False))
-            y1_selected = st.checkbox("第一黄柱", key="y1_check", value=st.session_state['criteria'].get('y1', False))
+            st.write("*** 五道彩图均线选项 ***")
+            r1_selected = st.checkbox("均线： 5日 > 10日 > 20日", key="r1_check",
+                                      value=st.session_state['criteria'].get('r1', False))
+            r2_selected = st.checkbox("均线： 20日 > 30日 > 60日", key="r2_check",
+                                      value=st.session_state['criteria'].get('r2', False))
+            r3_selected = st.checkbox("均线： 60日 > 120日 > 240日", key="r3_check",
+                                      value=st.session_state['criteria'].get('r3', False))
 
-        with col2:
+            st.write(" ")
+            st.write(" ")
             st.write("*** 趋势专家 ***")
-            qs_selected = st.checkbox("红柱紫线", key="qs_rbpl_check", value=st.session_state['criteria'].get('qsrbpl', False))
-            qsgrb_selected = st.checkbox("柱线绿变红", key="qs_grb_check",value=st.session_state['criteria'].get('qsgrb', False))
-            qsrgb_selected = st.checkbox("柱线红变绿", key="qs_rgb_check",value=st.session_state['criteria'].get('qsrgb', False))
-            qsgpl_selected = st.checkbox("主线绿变紫", key="qs_gpl_check",value=st.session_state['criteria'].get('qsgpl', False))
-            qspgl_selected = st.checkbox("主线紫变绿", key="qs_pgl_check",value=st.session_state['criteria'].get('qspgl', False))
+            qs_selected = st.checkbox("红柱紫线", key="qs_rbpl_check",
+                                      value=st.session_state['criteria'].get('qsrbpl', False))
+            qsgrb_selected = st.checkbox("柱线绿变红", key="qs_grb_check",
+                                         value=st.session_state['criteria'].get('qsgrb', False))
+            qsrgb_selected = st.checkbox("柱线红变绿", key="qs_rgb_check",
+                                         value=st.session_state['criteria'].get('qsrgb', False))
+            qsgpl_selected = st.checkbox("主线绿变紫", key="qs_gpl_check",
+                                         value=st.session_state['criteria'].get('qsgpl', False))
+            qspgl_selected = st.checkbox("主线紫变绿", key="qs_pgl_check",
+                                         value=st.session_state['criteria'].get('qspgl', False))
             qsbar_selected = st.selectbox(
                 "连续红柱天数",
                 options=[0, 2, 3, 4, 5],
                 key="qs_rbd_check"
             )
 
-            st.write("")
-            zj_selected = st.checkbox("资金所向", key="zj_check", value=st.session_state['criteria'].get('zj', False))
+            st.write(" ")
+            st.write(" ")
+            st.write("*** 其它指标 ***")
+            n1_selected = st.checkbox("牛一", key="n1_check", value=st.session_state['criteria'].get('n1', False))
+            y1_selected = st.checkbox("第一黄柱", key="y1_check", value=st.session_state['criteria'].get('y1', False))
+
+        with col2:
+
+            st.write("*** 资金所向 ***")
+            zj_selected = st.checkbox("水上红柱", key="zj_check", value=st.session_state['criteria'].get('zj', False))
+            zjg2r_selected = st.checkbox("柱线绿变红", key="zj_G2R_check",
+                                         value=st.session_state['criteria'].get('zjg2r', False))
+            zjr2g_selected = st.checkbox("柱线红变绿", key="zj_R2G_check",
+                                         value=st.session_state['criteria'].get('zjr2g', False))
+            zjbar_selected = st.selectbox(
+                "连续红柱天数",
+                options=[0, 2, 3, 4, 5],
+                key="zj_rbd_check"
+            )
+
+            st.write(" ")
+            st.write(" ")
+            st.write("*** RSI ***")
             rsi_selected = st.checkbox("RSI", key="rsi_check", value=st.session_state['criteria'].get('rsi', False))
             # Use columns to arrange inputs in one row
             col1, col2, col3 = st.columns([0.5, 1, 0.5])  # Adjust width as needed
@@ -529,7 +567,6 @@ def main():
                     disabled=not rsi_selected,
                     label_visibility="collapsed"
                 )
-
             with col2:
                 st.markdown("<h5 style='text-align: center;'>&lt; RSI range &lt;</h5>", unsafe_allow_html=True)
 
@@ -537,7 +574,7 @@ def main():
                 # RSI Max Value Input (Disabled if checkbox is unchecked)
                 rsi_max = st.number_input(
                     "Max RSI", min_value=0, max_value=100,
-                    value=st.session_state['criteria'].get('rsi_max', 0), step=1,
+                    value=st.session_state['criteria'].get('rsi_max', 100), step=1,
                     disabled=not rsi_selected,
                     label_visibility="collapsed"
                 )
@@ -546,6 +583,8 @@ def main():
                 rsi_min = 0
                 rsi_max = 0
 
+        st.write(" ")
+        st.write(" ")
         # Input fields for filters
         min_volume = st.number_input("最低成交量为 100,000 的倍数   Minimum Volume as a multiple of 100,000",
                                      min_value=0,
@@ -565,8 +604,11 @@ def main():
             'n1': n1_selected,
             'y1': y1_selected,
             'zj': zj_selected,
+            'zjrbd': zjbar_selected,
+            'zjg2r': zjg2r_selected,
+            'zjr2g': zjr2g_selected,
             'qsrbpl': qs_selected,
-            'qsrbd' : qsbar_selected,
+            'qsrbd': qsbar_selected,
             'qsgrb': qsgrb_selected,
             'qsrgb': qsrgb_selected,
             'qsgpl': qsgpl_selected,
@@ -644,12 +686,15 @@ def main():
 
         # Define a mapping for display labels
         criteria_labels = {
-            "r1": "彩图均线： 5日 > 10日 > 20日",
-            "r2": "彩图均线： 20日 > 30日 > 60日",
-            "r3": "彩图均线： 60日 > 120日 > 240日",
+            "r1": "五道彩图均线： 5日 > 10日 > 20日",
+            "r2": "五道彩图均线： 20日 > 30日 > 60日",
+            "r3": "五道彩图均线： 60日 > 120日 > 240日",
             "n1": "牛一",
             "y1": "第一黄柱",
-            "zj": "资金所向",
+            "zj": "资金所向 - 水上红柱",
+            "zjg2r": "资金所向 - 柱线绿变红",
+            "zjr2g": "资金所向 - 柱线红变绿",
+            "zjrbd": "资金所向 - 连续红柱天数",
             "qsrbpl": "趋势专家 - 红柱紫线",
             "qsgrb": "趋势专家 - 柱线绿变红",
             "qsrgb": "趋势专家 - 柱线红变绿",
