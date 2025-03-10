@@ -20,7 +20,7 @@ print("Firebase initialized successfully!")
 
 def get_latest_date():
     """Fetch the last updated date from Firestore (only once)."""
-    doc_ref = db.collection("data_date").document("latest_date")
+    doc_ref = db.collection("data_date").document("latest_date_myx")
     doc = doc_ref.get()
 
     if doc.exists:
@@ -149,7 +149,7 @@ st.markdown(
 
 def download_file():
     """Retrieve all stock data from the `screened_result` collection and return as a DataFrame."""
-    collection_ref = db.collection("screened_result")
+    collection_ref = db.collection("screened_result_myx")
     docs = collection_ref.stream()
 
     stock_list = []
@@ -158,7 +158,7 @@ def download_file():
         stock_list.append(stock_data)
 
     if not stock_list:
-        print("No data found in Firestore collection: screened_result.")
+        print("No data found in Firestore collection: screened_result_myx.")
         return None
 
     # Convert list of stock data to Pandas DataFrame
@@ -167,7 +167,7 @@ def download_file():
 
 def load_stock_data(stock_symbol):
     """Load stock data from Firestore and return a Pandas DataFrame."""
-    doc_ref = db.collection("stocks").document(stock_symbol)  # Reference to Firestore document
+    doc_ref = db.collection("stocks_myx").document(stock_symbol)  # Reference to Firestore document
     doc = doc_ref.get()  # Retrieve document
 
     if doc.exists:
