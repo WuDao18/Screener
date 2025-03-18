@@ -211,6 +211,14 @@ def check_indicators_and_save(df, min_volume, min_price, brsi_value, hrsi_value,
             mask &= (df['n1'] == 1)
         if st.session_state.get('y1_check', False):
             mask &= (df['y1'] == 1)
+        if st.session_state.get('DKWR_check', False):
+            mask &= (df['DKW'] == 1)
+        if st.session_state.get('DKWB_check', False):
+            mask &= (df['DKW'] == 2)
+        if st.session_state.get('R2B_check', False):
+            mask &= (df['DKW_R2B'] == 1)
+        if st.session_state.get('B2R_check', False):
+            mask &= (df['DKW_B2R'] == 1)
         if st.session_state.get('brsiMma_check', False):
             mask &= (df['brsiMma'] == 1)
         if st.session_state.get('brsi1Mma_check', False):
@@ -251,6 +259,26 @@ def check_indicators_and_save(df, min_volume, min_price, brsi_value, hrsi_value,
                 mask &= (df['zj4R'] == 1)
             elif qs_selection == 5:
                 mask &= (df['zj5R'] == 1)
+        if st.session_state.get('DKWRD_check', False):
+            dkwr_selection = st.session_state.get('DKWRD_check', 0)
+            if dkwr_selection == 2:
+                mask &= (df['DKW2R'] == 1)
+            elif dkwr_selection == 3:
+                mask &= (df['DKW3R'] == 1)
+            elif dkwr_selection == 4:
+                mask &= (df['DKW4R'] == 1)
+            elif dkwr_selection == 5:
+                mask &= (df['DKW5R'] == 1)
+        if st.session_state.get('DKWBD_check', False):
+            dkwb_selection = st.session_state.get('DKWBD_check', 0)
+            if dkwb_selection == 2:
+                mask &= (df['DKW2B'] == 1)
+            elif dkwb_selection == 3:
+                mask &= (df['DKW3B'] == 1)
+            elif dkwb_selection == 4:
+                mask &= (df['DKW4B'] == 1)
+            elif dkwb_selection == 5:
+                mask &= (df['DKW5B'] == 1)
         if st.session_state.get('brsi_operator', False):
             operator_selection = st.session_state.get('brsi_operator', 0)
             if operator_selection == ">=":
@@ -543,18 +571,36 @@ def main():
             st.write("*** 趋势专家 ***")
             qs_selected = st.checkbox("红柱紫线", key="qs_rbpl_check",
                                       value=st.session_state['criteria'].get('qsrbpl', False))
-            qsgrb_selected = st.checkbox("柱线绿变红", key="qs_grb_check",
+            qsgrb_selected = st.checkbox("绿变红", key="qs_grb_check",
                                          value=st.session_state['criteria'].get('qsgrb', False))
-            qsrgb_selected = st.checkbox("柱线红变绿", key="qs_rgb_check",
+            qsrgb_selected = st.checkbox("红变绿", key="qs_rgb_check",
                                          value=st.session_state['criteria'].get('qsrgb', False))
-            qsgpl_selected = st.checkbox("主线绿变紫", key="qs_gpl_check",
+            qsgpl_selected = st.checkbox("趋势线绿变紫", key="qs_gpl_check",
                                          value=st.session_state['criteria'].get('qsgpl', False))
-            qspgl_selected = st.checkbox("主线紫变绿", key="qs_pgl_check",
+            qspgl_selected = st.checkbox("趋势紫变绿", key="qs_pgl_check",
                                          value=st.session_state['criteria'].get('qspgl', False))
             qsbar_selected = st.selectbox(
                 "连续红柱天数",
                 options=[0, 2, 3, 4, 5],
                 key="qs_rbd_check"
+            )
+
+            st.write(" ")
+            st.write(" ")
+            st.write("*** 多空王 ***")
+            DKWR_selected = st.checkbox("红飘带", key="DKWR_check", value=st.session_state['criteria'].get('DKWR', False))
+            DKWB_selected = st.checkbox("蓝飘带", key="DKWB_check", value=st.session_state['criteria'].get('DKWB', False))
+            R2B_selected = st.checkbox("飘带红变蓝", key="R2B_check", value=st.session_state['criteria'].get('R2B', False))
+            B2R_selected = st.checkbox("飘带蓝变红", key="B2R_check", value=st.session_state['criteria'].get('B2R', False))
+            DKWRD_selected = st.selectbox(
+                "连续红飘带天数",
+                options=[0, 2, 3, 4, 5],
+                key="DKWRD_check"
+            )
+            DKWBD_selected = st.selectbox(
+                "连续蓝飘带天数",
+                options=[0, 2, 3, 4, 5],
+                key="DKWBD_check"
             )
 
             st.write(" ")
@@ -567,9 +613,9 @@ def main():
 
             st.write("*** 资金所向 ***")
             zj_selected = st.checkbox("水上红柱", key="zj_check", value=st.session_state['criteria'].get('zj', False))
-            zjg2r_selected = st.checkbox("柱线绿变红", key="zj_G2R_check",
+            zjg2r_selected = st.checkbox("绿变红", key="zj_G2R_check",
                                          value=st.session_state['criteria'].get('zjg2r', False))
-            zjr2g_selected = st.checkbox("柱线红变绿", key="zj_R2G_check",
+            zjr2g_selected = st.checkbox("红变绿", key="zj_R2G_check",
                                          value=st.session_state['criteria'].get('zjr2g', False))
             zjbar_selected = st.selectbox(
                 "连续红柱天数",
@@ -647,16 +693,11 @@ def main():
 
         st.write(" ")
         st.write(" ")
-        # Input fields for filters
         min_volume = st.number_input("最低成交量为 100,000 的倍数   Minimum Volume as a multiple of 100,000",
                                      min_value=0,
                                      value=st.session_state['criteria'].get('min_volume', 0), step=1)
         min_price = st.number_input("最低股价   Minimum Stock Price", min_value=0.0,
                                     value=st.session_state['criteria'].get('min_price', 0.0), step=0.1)
-        min_banker_value = st.number_input("最低红柱   Minimum Banker Value (0-100)", min_value=0,
-                                           value=st.session_state['criteria'].get('min_banker_value', 0), step=1)
-        max_banker_value = st.number_input("最高红柱   Maximum Banker Value (0-100)", min_value=0,
-                                           value=st.session_state['criteria'].get('max_banker_value', 0), step=1)
 
         # Update criteria in session state
         st.session_state['criteria'] = {
@@ -675,6 +716,12 @@ def main():
             'qsrgb': qsrgb_selected,
             'qsgpl': qsgpl_selected,
             'qspgl': qspgl_selected,
+            'DKWR': DKWR_selected,
+            'DKWB': DKWB_selected,
+            'DKWR2B': R2B_selected,
+            'DKWB2R': B2R_selected,
+            'DKWRD':DKWRD_selected,
+            'DKWBD':DKWBD_selected,
             'min_volume': min_volume,
             'min_price': min_price,
             'rsi': rsi_selected,
@@ -759,15 +806,21 @@ def main():
             "n1": "牛一",
             "y1": "第一黄柱",
             "zj": "资金所向 - 水上红柱",
-            "zjg2r": "资金所向 - 柱线绿变红",
-            "zjr2g": "资金所向 - 柱线红变绿",
+            "zjg2r": "资金所向 - 绿变红",
+            "zjr2g": "资金所向 - 红变绿",
             "zjrbd": "资金所向 - 连续红柱天数",
             "qsrbpl": "趋势专家 - 红柱紫线",
-            "qsgrb": "趋势专家 - 柱线绿变红",
-            "qsrgb": "趋势专家 - 柱线红变绿",
-            "qsgpl": "趋势专家 - 主线绿变紫",
-            "qspgl": "趋势专家 - 主线紫变绿",
+            "qsgrb": "趋势专家 - 绿变红",
+            "qsrgb": "趋势专家 - 红变绿",
+            "qsgpl": "趋势专家 - 趋势线绿变紫",
+            "qspgl": "趋势专家 - 趋势线紫变绿",
             "qsrbd": "趋势专家 - 连续红柱天数",
+            "DKWR": "多空王 - 红飘带",
+            "DKWB": "多空王 - 蓝飘带",
+            "DKWR2B": "多空王 - 飘带红变蓝",
+            "DKWB2R": "多空王 - 飘带蓝变红",
+            "DKWRD": "多空王 - 连续红飘带天数",
+            "DKWBD": "多空王 - 连续蓝飘带天数",
             "min_volume": "最低成交量（100k的倍数）",
             "min_price": "最低股价",
             "rsi": "RSI",
