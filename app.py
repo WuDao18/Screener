@@ -558,7 +558,10 @@ def main():
         col1, col2 = st.columns(2)
 
         with col1:
-            st.write("*** 五道彩图均线选项 ***")
+            st.markdown(
+                "<h5>🔷 <span style='color: #1E90FF; font-size: 20px;'>五道彩图均线选项</span> 🔷</h5>",
+                unsafe_allow_html=True
+            )
             r1_selected = st.checkbox("均线： 5日 > 10日 > 20日", key="r1_check",
                                       value=st.session_state['criteria'].get('r1', False))
             r2_selected = st.checkbox("均线： 20日 > 30日 > 60日", key="r2_check",
@@ -568,7 +571,10 @@ def main():
 
             st.write(" ")
             st.write(" ")
-            st.write("*** 趋势专家 ***")
+            st.markdown(
+                "<h5>🔷 <span style='color: #1E90FF; font-size: 20px;'>趋势专家</span> 🔷</h5>",
+                unsafe_allow_html=True
+            )
             qs_selected = st.checkbox("红柱紫线", key="qs_rbpl_check",
                                       value=st.session_state['criteria'].get('qsrbpl', False))
             qsgrb_selected = st.checkbox("绿变红", key="qs_grb_check",
@@ -577,7 +583,7 @@ def main():
                                          value=st.session_state['criteria'].get('qsrgb', False))
             qsgpl_selected = st.checkbox("趋势线绿变紫", key="qs_gpl_check",
                                          value=st.session_state['criteria'].get('qsgpl', False))
-            qspgl_selected = st.checkbox("趋势紫变绿", key="qs_pgl_check",
+            qspgl_selected = st.checkbox("趋势线紫变绿", key="qs_pgl_check",
                                          value=st.session_state['criteria'].get('qspgl', False))
             qsbar_selected = st.selectbox(
                 "连续红柱天数",
@@ -587,7 +593,10 @@ def main():
 
             st.write(" ")
             st.write(" ")
-            st.write("*** 多空王 ***")
+            st.markdown(
+                "<h5>🔷 <span style='color: #1E90FF; font-size: 20px;'>多空王</span> 🔷</h5>",
+                unsafe_allow_html=True
+            )
             DKWR_selected = st.checkbox("红飘带", key="DKWR_check", value=st.session_state['criteria'].get('DKWR', False))
             DKWB_selected = st.checkbox("蓝飘带", key="DKWB_check", value=st.session_state['criteria'].get('DKWB', False))
             R2B_selected = st.checkbox("飘带红变蓝", key="R2B_check", value=st.session_state['criteria'].get('R2B', False))
@@ -605,13 +614,19 @@ def main():
 
             st.write(" ")
             st.write(" ")
-            st.write("*** 其它指标 ***")
+            st.markdown(
+                "<h5>🔷 <span style='color: #1E90FF; font-size: 20px;'>单一指标</span> 🔷</h5>",
+                unsafe_allow_html=True
+            )
             n1_selected = st.checkbox("牛一", key="n1_check", value=st.session_state['criteria'].get('n1', False))
             y1_selected = st.checkbox("第一黄柱", key="y1_check", value=st.session_state['criteria'].get('y1', False))
 
         with col2:
 
-            st.write("*** 资金所向 ***")
+            st.markdown(
+                "<h5>🔷 <span style='color: #1E90FF; font-size: 20px;'>资金所向</span> 🔷</h5>",
+                unsafe_allow_html=True
+            )
             zj_selected = st.checkbox("水上红柱", key="zj_check", value=st.session_state['criteria'].get('zj', False))
             zjg2r_selected = st.checkbox("绿变红", key="zj_G2R_check",
                                          value=st.session_state['criteria'].get('zjg2r', False))
@@ -625,7 +640,10 @@ def main():
 
             st.write(" ")
             st.write(" ")
-            st.write("*** 资金图 ***")
+            st.markdown(
+                "<h5>🔷 <span style='color: #1E90FF; font-size: 20px;'>资金图</span> 🔷</h5>",
+                unsafe_allow_html=True
+            )
             brsiMma_selected = st.checkbox("主力上穿均线", key="brsiMma_check",
                                            value=st.session_state['criteria'].get('brsiMma', False))
             brsi1Mma_selected = st.checkbox("主力首次上穿均线", key="brsi1Mma_check",
@@ -666,7 +684,10 @@ def main():
 
             st.write(" ")
             st.write(" ")
-            st.write("*** RSI ***")
+            st.markdown(
+                "<h5>🔷 <span style='color: #1E90FF; font-size: 20px;'>RSI</span> 🔷</h5>",
+                unsafe_allow_html=True
+            )
             rsi_selected = st.checkbox("RSI", key="rsi_check", value=st.session_state['criteria'].get('rsi', False))
             # Use columns to arrange inputs in one row
             col1, col2, = st.columns([1, 1])  # Adjust width as needed
