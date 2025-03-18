@@ -20,7 +20,7 @@ print("Firebase initialized successfully!")
 
 def get_latest_date():
     """Fetch the last updated date from Firestore (only once)."""
-    doc_ref = db.collection("data_date").document("latest_date_myx")
+    doc_ref = db.collection("data_date").document("latest_date_MYX")
     doc = doc_ref.get()
 
     if doc.exists:
@@ -149,7 +149,7 @@ st.markdown(
 
 def download_file():
     """Retrieve all stock data from the `screened_result` collection and return as a DataFrame."""
-    collection_ref = db.collection("screened_result_myx")
+    collection_ref = db.collection("screened_result_MYX")
     docs = collection_ref.stream()
 
     stock_list = []
@@ -167,7 +167,7 @@ def download_file():
 
 def load_stock_data(stock_symbol):
     """Load stock data from Firestore and return a Pandas DataFrame."""
-    doc_ref = db.collection("stocks_myx").document(stock_symbol)  # Reference to Firestore document
+    doc_ref = db.collection("stocks_MYX").document(stock_symbol)  # Reference to Firestore document
     doc = doc_ref.get()  # Retrieve document
 
     if doc.exists:
@@ -195,7 +195,7 @@ def select_stock(stock):
     st.session_state['selected_stock'] = stock
 
 
-def check_indicators_and_save(df, min_volume, min_price, min_banker_value, max_banker_value,rsi_min, rsi_max):
+def check_indicators_and_save(df, min_volume, min_price, brsi_value, hrsi_value, rrsi_value, rsi_min, rsi_max):
     try:
         # Initialize mask for filtering
         mask = pd.Series([True] * len(df))
@@ -211,6 +211,10 @@ def check_indicators_and_save(df, min_volume, min_price, min_banker_value, max_b
             mask &= (df['n1'] == 1)
         if st.session_state.get('y1_check', False):
             mask &= (df['y1'] == 1)
+        if st.session_state.get('brsiMma_check', False):
+            mask &= (df['brsiMma'] == 1)
+        if st.session_state.get('brsi1Mma_check', False):
+            mask &= (df['brsi1stMma'] == 1)
         if st.session_state.get('zj_check', False):
             mask &= (df['zj'] == 1)
         if st.session_state.get('qs_rbpl_check', False):
@@ -224,7 +228,7 @@ def check_indicators_and_save(df, min_volume, min_price, min_banker_value, max_b
         if st.session_state.get('qs_pgl_check', False):
             mask &= (df['qsPGL'] == 1)
         if st.session_state.get('qs_rbd_check', False):
-            qs_selection = st.session_state.get('qs_rbd_check',0)
+            qs_selection = st.session_state.get('qs_rbd_check', 0)
             if qs_selection == 2:
                 mask &= (df['qs2R'] == 1)
             elif qs_selection == 3:
@@ -238,7 +242,7 @@ def check_indicators_and_save(df, min_volume, min_price, min_banker_value, max_b
         if st.session_state.get('zj_G2R_check', False):
             mask &= (df['zjG2R'] == 1)
         if st.session_state.get('zj_rbd_check', False):
-            qs_selection = st.session_state.get('zj_rbd_check',0)
+            qs_selection = st.session_state.get('zj_rbd_check', 0)
             if qs_selection == 2:
                 mask &= (df['zj2R'] == 1)
             elif qs_selection == 3:
@@ -247,16 +251,36 @@ def check_indicators_and_save(df, min_volume, min_price, min_banker_value, max_b
                 mask &= (df['zj4R'] == 1)
             elif qs_selection == 5:
                 mask &= (df['zj5R'] == 1)
+        if st.session_state.get('brsi_operator', False):
+            operator_selection = st.session_state.get('brsi_operator', 0)
+            if operator_selection == ">=":
+                mask &= (df['brsi'] >= brsi_value )
+            elif operator_selection == "<=":
+                mask &= (df['brsi'] <= brsi_value)
+            elif operator_selection == "=":
+                mask &= (df['brsi'] == brsi_value)
+        if st.session_state.get('hrsi_operator', False):
+            operator_selection = st.session_state.get('hrsi_operator', 0)
+            if operator_selection == ">=":
+                mask &= (df['hrsi'] >= hrsi_value )
+            elif operator_selection == "<=":
+                mask &= (df['hrsi'] <= hrsi_value)
+            elif operator_selection == "=":
+                mask &= (df['hrsi'] == hrsi_value)
+        if st.session_state.get('rrsi_operator', False):
+            operator_selection = st.session_state.get('rrsi_operator', 0)
+            if operator_selection == ">=":
+                mask &= (df['rrsi'] >= rrsi_value )
+            elif operator_selection == "<=":
+                mask &= (df['rrsi'] <= rrsi_value)
+            elif operator_selection == "=":
+                mask &= (df['rrsi'] == rrsi_value)
 
         # Apply user-defined filters
         if min_volume:
             mask &= (df['volume'] >= min_volume * 100000)
         if min_price:
             mask &= (df['close'] >= min_price)
-        if min_banker_value:
-            mask &= (df['brsi'] >= min_banker_value)
-        if max_banker_value:
-            mask &= (df['brsi'] <= max_banker_value)
         if rsi_min and st.session_state.get('rsi_check', False):
             mask &= (df['rsi'] >= rsi_min)
         if rsi_max and st.session_state.get('rsi_check', False):
@@ -555,33 +579,71 @@ def main():
 
             st.write(" ")
             st.write(" ")
+            st.write("*** 资金图 ***")
+            brsiMma_selected = st.checkbox("主力上穿均线", key="brsiMma_check",
+                                           value=st.session_state['criteria'].get('brsiMma', False))
+            brsi1Mma_selected = st.checkbox("主力首次上穿均线", key="brsi1Mma_check",
+                                            value=st.session_state['criteria'].get('brsi1Mma', False))
+
+            # st.write("主力： ")
+            col1, col2 = st.columns([0.5, 1])  # Adjust width as needed
+            with col1:
+                brsi_operator_selected = st.selectbox(" 主力：", options=[0, ">=", "<=", "="], key="brsi_operator")
+            with col2:
+                brsi_value = st.number_input(" ", min_value=0.0, max_value=100.0, key="brsi_value",
+                                             value=float(st.session_state['criteria'].get('brsi_value', 0)), step=0.1,
+                                             disabled=(brsi_operator_selected == 0))
+            if brsi_operator_selected == 0:
+                brsi_value = 0.0  # Reset stored value
+
+            # st.write("游资： ")
+            col1, col2 = st.columns([0.5, 1])  # Adjust width as needed
+            with col1:
+                hrsi_operator_selected = st.selectbox(" 游资：", options=[0, ">=", "<=", "="], key="hrsi_operator")
+            with col2:
+                hrsi_value = st.number_input(" ", min_value=0.0, max_value=100.0, key="hrsi_value",
+                                             value=float(st.session_state['criteria'].get('hrsi_value', 0)), step=0.1,
+                                             disabled=(hrsi_operator_selected == 0))
+            if hrsi_operator_selected == 0:
+                hrsi_value = 0.0  # Reset stored value
+
+            # st.write("散户： ")
+            col1, col2 = st.columns([0.5, 1])  # Adjust width as needed
+            with col1:
+                rrsi_operator_selected = st.selectbox(" 散户：", options=[0, ">=", "<=", "="], key="rrsi_operator")
+            with col2:
+                rrsi_value = st.number_input(" ", min_value=0.0, max_value=100.0, key="rrsi_value",
+                                             value=float(st.session_state['criteria'].get('rrsi_value', 0)), step=0.1,
+                                             disabled=(rrsi_operator_selected == 0))
+            if rrsi_operator_selected == 0:
+                rrsi_value = 0.0  # Reset stored value
+
+            st.write(" ")
+            st.write(" ")
             st.write("*** RSI ***")
             rsi_selected = st.checkbox("RSI", key="rsi_check", value=st.session_state['criteria'].get('rsi', False))
             # Use columns to arrange inputs in one row
-            col1, col2, col3 = st.columns([0.5, 1, 0.5])  # Adjust width as needed
+            col1, col2, = st.columns([1, 1])  # Adjust width as needed
             with col1:
                 # RSI Min Value Input (Disabled if checkbox is unchecked)
                 rsi_min = st.number_input(
                     "Min RSI", min_value=0, max_value=100,
                     value=st.session_state['criteria'].get('rsi_min', 0), step=1,
-                    disabled=not rsi_selected,
-                    label_visibility="collapsed"
+                    disabled=not rsi_selected
                 )
-            with col2:
-                st.markdown("<h5 style='text-align: center;'>&lt; RSI range &lt;</h5>", unsafe_allow_html=True)
 
-            with col3:
+            with col2:
                 # RSI Max Value Input (Disabled if checkbox is unchecked)
                 rsi_max = st.number_input(
                     "Max RSI", min_value=0, max_value=100,
                     value=st.session_state['criteria'].get('rsi_max', 100), step=1,
-                    disabled=not rsi_selected,
-                    label_visibility="collapsed"
+                    disabled=not rsi_selected
                 )
 
             if not rsi_selected:
                 rsi_min = 0
                 rsi_max = 0
+
 
         st.write(" ")
         st.write(" ")
@@ -615,11 +677,17 @@ def main():
             'qspgl': qspgl_selected,
             'min_volume': min_volume,
             'min_price': min_price,
-            'min_banker_value': min_banker_value,
-            'max_banker_value': max_banker_value,
             'rsi': rsi_selected,
             'rsi_min': rsi_min,
             'rsi_max': rsi_max,
+            'brsiMma': brsiMma_selected,
+            'brsi1Mma': brsi1Mma_selected,
+            'brsio':brsi_operator_selected,
+            'brsi_value': brsi_value,
+            'hrsio': hrsi_operator_selected,
+            'hrsi_value': hrsi_value,
+            'rrsio': rrsi_operator_selected,
+            'rrsi_value': rrsi_value
         }
 
         col5, col6 = st.columns([1, 1])
@@ -633,8 +701,7 @@ def main():
 
                     if isinstance(file_content, pd.DataFrame) and not file_content.empty:
                         matching_symbols, temp_file_path = check_indicators_and_save(
-                            file_content, min_volume, min_price, min_banker_value, max_banker_value, rsi_min, rsi_max)
-
+                            file_content, min_volume, min_price, brsi_value, hrsi_value, rrsi_value, rsi_min, rsi_max)
                         st.session_state['temp_file_path'] = temp_file_path
                         st.session_state['matching_stocks'] = matching_symbols
 
@@ -672,7 +739,7 @@ def main():
                         st.download_button(
                             label="下载名单 Download List",
                             data=modified_data,
-                            file_name=f"filtered_result_{today_date}.txt",
+                            file_name=f"filtered_result_MYX_{today_date}.txt",
                             mime="text/plain"
                         )
                 except FileNotFoundError:
@@ -701,10 +768,16 @@ def main():
             "qsgpl": "趋势专家 - 主线绿变紫",
             "qspgl": "趋势专家 - 主线紫变绿",
             "qsrbd": "趋势专家 - 连续红柱天数",
-            "min_volume": "Min Volume in 100k",
-            "min_price": "Min Price",
-            "min_banker_value": "Min Banker Value",
-            "max_banker_value": "Max Banker Value",
+            "min_volume": "股量不低于（100k）",
+            "min_price": "股价不低于",
+            "brsiMma": "资金图 - 筹码上穿均线",
+            "brsi1Mma": "资金图 - 筹码首次上穿均线",
+            "brsio": "资金图 - 主力参数关系",
+            "brsi_value": "资金图 - 主力参数",
+            "hrsio": "资金图 - 游资参数关系",
+            "hrsi_value": "资金图 - 游资参数",
+            "rrsio": "资金图 - 散户参数关系",
+            "rrsi_value": "资金图 - 散户参数",
         }
 
         # Display selected criteria in the sidebar without extra spacing
