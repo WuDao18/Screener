@@ -8,7 +8,7 @@ import firebase_admin
 from firebase_admin import credentials, auth,firestore
 from datetime import datetime, timedelta
 import random
-
+import requests
 
 if not firebase_admin._apps:
     firebase_creds = dict(st.secrets["firebase_credentials"])
@@ -30,13 +30,21 @@ def get_latest_date():
         print("No date found.")
 
 def send_otp(email):
-    """Generate and store OTP, then send it to the user's email."""
+    """Generate, store, and send OTP to user's Telegram."""
+    TELEGRAM_BOT_TOKEN = "7793286019:AAFPRUxk6Pmv2frVqIjeBvsnY8NJa28RQSU"
     user_ref = db.collection("users").document(email)
     user = user_ref.get()
 
     if user.exists:
+        user_data = user.to_dict()
+        telegram_chat_id = user_data.get("chat_id")  # Retrieve Telegram chat ID
+
+        if not telegram_chat_id:
+            st.error("No Telegram chat ID found for this user. Please register your Telegram ID.")
+            return
+
         otp = str(random.randint(100000, 999999))  # Generate a 6-digit OTP
-        expiration_time = datetime.now() + timedelta(minutes=5)  # OTP valid for 5 minutes
+        expiration_time = datetime.utcnow() + timedelta(minutes=5)  # OTP valid for 5 minutes
 
         # ✅ Store OTP with email as document ID
         otp_ref = db.collection("otp_verifications").document(email)
@@ -46,7 +54,19 @@ def send_otp(email):
             "verified": False
         })
 
-        #st.success("OTP generated! Please check Telegram to receive it.")
+        # ✅ Send OTP to user's Telegram
+        message = f"🔐 Your OTP code is: {otp}\n⚠️ This OTP expires in 5 minutes."
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        payload = {
+            "chat_id": telegram_chat_id,
+            "text": message
+        }
+        response = requests.post(url, json=payload)
+
+        if response.status_code == 200:
+            st.success("OTP sent to your Telegram!")
+        else:
+            st.error("Failed to send OTP via Telegram. Please try again.")
     else:
         st.error("Email not found in Firestore. Please register first.")
 
@@ -59,26 +79,35 @@ def validate_otp(email, otp):
             return False
 
         otp_data = otp_doc.to_dict()
-        stored_otp = otp_data["otp"]
-        expiration_time = datetime.fromisoformat(otp_data["expiration_time"])
+        stored_otp = str(otp_data["otp"])  # Ensure stored OTP is a string
+        expiration_time_str = otp_data["expiration_time"]
+
+        print(f"Database OTP is: {stored_otp}")
+        print(f"User entered OTP is: {otp}")
+
+        # Convert expiration time properly
+        try:
+            expiration_time = datetime.fromisoformat(expiration_time_str)  # If stored as ISO string
+        except ValueError:
+            expiration_time = otp_data["expiration_time"]  # If stored as Firestore timestamp
 
         # Check if OTP matches and has not expired
-        if datetime.now() > expiration_time:
-            print("OTP has expired.密码逾期")
+        if datetime.utcnow() > expiration_time:
+            print("OTP has expired. 密码逾期")
             return False
 
-        if otp == stored_otp:
+        if str(otp) == stored_otp:  # Ensure both are compared as strings
             # Mark the OTP as verified
             db.collection("otp_verifications").document(email).update({"verified": True})
-            print("OTP validated successfully!成功验证！")
+            print("OTP validated successfully! 成功验证！")
             return True
         else:
             print("Invalid OTP. 密码错误。")
             return False
+
     except Exception as e:
         print(f"Error validating OTP: {e}")
         return False
-
 
 def add_custom_css():
     st.markdown("""
@@ -524,11 +553,11 @@ def main():
                 try:
                     user = auth.get_user_by_email(email)  # Check if user exists
                     user_id = email  # Get the user ID from Firebase
-                    send_otp(email)  # Call the function to send OTP
+                    send_otp(email)  # Call the function to generate OTP
                     st.session_state["otp_sent"] = True
                     st.session_state["user_id"] = user_id
-                    st.success("密码已经发出。请到 Telegram 输入 /otp 领取密码。")
-                    st.success("OTP sent to your telegram. Please type /otp in your Telegram.")
+                    st.success("OTP 已经发出到您的 Telegram。")
+                    st.success("OTP has been sent to your Telegram.")
                     st.button("OK")
                 except firebase_admin.auth.UserNotFoundError:
                     st.error("电邮输入错误，请再尝试。Email not found. Please try again. ")
