@@ -64,7 +64,7 @@ def send_otp(email):
         response = requests.post(url, json=payload)
 
         if response.status_code == 200:
-            st.success("OTP sent to your Telegram!")
+            st.success("OTP 已经发出到您的 Telegram。OTP has been sent to your Telegram.")
         else:
             st.error("Failed to send OTP via Telegram. Please try again.")
     else:
@@ -556,8 +556,6 @@ def main():
                     send_otp(email)  # Call the function to generate OTP
                     st.session_state["otp_sent"] = True
                     st.session_state["user_id"] = user_id
-                    st.success("OTP 已经发出到您的 Telegram。")
-                    st.success("OTP has been sent to your Telegram.")
                     st.button("OK")
                 except firebase_admin.auth.UserNotFoundError:
                     st.error("电邮输入错误，请再尝试。Email not found. Please try again. ")
