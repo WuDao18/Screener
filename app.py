@@ -31,7 +31,7 @@ def get_latest_date():
 
 def send_otp(email):
     """Generate, store, and send OTP to user's Telegram."""
-    TELEGRAM_BOT_TOKEN = "7793286019:AAFPRUxk6Pmv2frVqIjeBvsnY8NJa28RQSU"
+    TELEGRAM_BOT_TOKEN = st.secrets["TELEGRAM_BOT_TOKEN"]
     user_ref = db.collection("users").document(email)
     user = user_ref.get()
 
