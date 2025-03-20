@@ -844,6 +844,10 @@ def main():
                 except Exception as e:
                     st.error(f"Error processing data: {str(e)}")
 
+        if exchange != st.session_state.selected_exchange: #detect changes in exchange
+            st.session_state.selected_exchange = exchange
+            st.session_state.matching_stocks = []  # Clear stock list
+
         # Display matching stocks
         if st.session_state.get('show_list', False):
             stock_list = st.session_state.get('matching_stocks', [])
