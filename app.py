@@ -126,13 +126,13 @@ def add_custom_css():
         <style>
         /* Style for the download button */
         div.stDownloadButton > button {
-            background-color: #333333; 
+            background-color: #004080; 
             color: white;
             font-weight: bold;
 
         }
         div.stDownloadButton > button:hover {
-            background-color: #555555; 
+            background-color: #002b5e; 
             color: white;
         }
         </style>
@@ -174,6 +174,20 @@ st.markdown(
     </style>
     """,
     unsafe_allow_html=True,
+)
+
+#change dropdown menu font size and colour
+st.markdown(
+    """
+    <style>
+    div[data-baseweb="select"] > div {
+        font-size: 16px !important;
+        font-family: Arial, sans-serif !important;
+        color: darkblue !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
 )
 
 def download_file():
@@ -264,6 +278,8 @@ def check_indicators_and_save(df, min_volume, min_price, brsi_value, hrsi_value,
             mask &= (df['qsGPL'] == 1)
         if st.session_state.get('qs_pgl_check', False):
             mask &= (df['qsPGL'] == 1)
+        if st.session_state.get('qs_atm_check', False):
+            mask &= (df['qsATM'] == 1)
         if st.session_state.get('qs_rbd_check', False):
             qs_selection = st.session_state.get('qs_rbd_check', 0)
             if qs_selection == 2:
@@ -612,8 +628,10 @@ def main():
                                          value=st.session_state['criteria'].get('qsgpl', False))
             qspgl_selected = st.checkbox("趋势线紫变绿", key="qs_pgl_check",
                                          value=st.session_state['criteria'].get('qspgl', False))
+            qsatm_selected = st.checkbox("ATM", key="qs_atm_check",
+                                         value=st.session_state['criteria'].get('qsatm', False))
             qsbar_selected = st.selectbox(
-                "连续红柱天数",
+                "连续红柱天数:",
                 options=[0, 2, 3, 4, 5],
                 key="qs_rbd_check"
             )
@@ -629,24 +647,16 @@ def main():
             R2B_selected = st.checkbox("飘带红变蓝", key="R2B_check", value=st.session_state['criteria'].get('R2B', False))
             B2R_selected = st.checkbox("飘带蓝变红", key="B2R_check", value=st.session_state['criteria'].get('B2R', False))
             DKWRD_selected = st.selectbox(
-                "连续红飘带天数",
+                "连续红飘带天数:",
                 options=[0, 2, 3, 4, 5],
                 key="DKWRD_check"
             )
             DKWBD_selected = st.selectbox(
-                "连续蓝飘带天数",
+                "连续蓝飘带天数:",
                 options=[0, 2, 3, 4, 5],
                 key="DKWBD_check"
             )
 
-            st.write(" ")
-            st.write(" ")
-            st.markdown(
-                "<h5>🔷 <span style='color: #1E90FF; font-size: 20px;'>单一指标</span> 🔷</h5>",
-                unsafe_allow_html=True
-            )
-            n1_selected = st.checkbox("牛一", key="n1_check", value=st.session_state['criteria'].get('n1', False))
-            y1_selected = st.checkbox("第一黄柱", key="y1_check", value=st.session_state['criteria'].get('y1', False))
 
         with col2:
 
@@ -660,7 +670,7 @@ def main():
             zjr2g_selected = st.checkbox("红变绿", key="zj_R2G_check",
                                          value=st.session_state['criteria'].get('zjr2g', False))
             zjbar_selected = st.selectbox(
-                "连续红柱天数",
+                "连续红柱天数:",
                 options=[0, 2, 3, 4, 5],
                 key="zj_rbd_check"
             )
@@ -721,7 +731,7 @@ def main():
             with col1:
                 # RSI Min Value Input (Disabled if checkbox is unchecked)
                 rsi_min = st.number_input(
-                    "Min RSI", min_value=0, max_value=100,
+                    "Min RSI:", min_value=0, max_value=100,
                     value=st.session_state['criteria'].get('rsi_min', 0), step=1,
                     disabled=not rsi_selected
                 )
@@ -729,7 +739,7 @@ def main():
             with col2:
                 # RSI Max Value Input (Disabled if checkbox is unchecked)
                 rsi_max = st.number_input(
-                    "Max RSI", min_value=0, max_value=100,
+                    "Max RSI:", min_value=0, max_value=100,
                     value=st.session_state['criteria'].get('rsi_max', 100), step=1,
                     disabled=not rsi_selected
                 )
@@ -738,13 +748,22 @@ def main():
                 rsi_min = 0
                 rsi_max = 0
 
+            st.write(" ")
+            st.write(" ")
+            st.markdown(
+                "<h5>🔷 <span style='color: #1E90FF; font-size: 20px;'>单一指标</span> 🔷</h5>",
+                unsafe_allow_html=True
+            )
+            n1_selected = st.checkbox("牛一", key="n1_check", value=st.session_state['criteria'].get('n1', False))
+            y1_selected = st.checkbox("第一黄柱", key="y1_check", value=st.session_state['criteria'].get('y1', False))
+
 
         st.write(" ")
         st.write(" ")
-        min_volume = st.number_input("最低成交量为 100,000 的倍数   Minimum Volume as a multiple of 100,000",
+        min_volume = st.number_input("最低成交量为 100,000 的倍数:   Minimum Volume as a multiple of 100,000:",
                                      min_value=0,
                                      value=st.session_state['criteria'].get('min_volume', 0), step=1)
-        min_price = st.number_input("最低股价   Minimum Stock Price", min_value=0.0,
+        min_price = st.number_input("最低股价:   Minimum Stock Price:", min_value=0.0,
                                     value=st.session_state['criteria'].get('min_price', 0.0), step=0.1)
 
         # Update criteria in session state
@@ -764,6 +783,7 @@ def main():
             'qsrgb': qsrgb_selected,
             'qsgpl': qsgpl_selected,
             'qspgl': qspgl_selected,
+            'qsatm': qsatm_selected,
             'DKWR': DKWR_selected,
             'DKWB': DKWB_selected,
             'DKWR2B': R2B_selected,
@@ -863,6 +883,7 @@ def main():
             "qsgpl": "趋势专家 - 趋势线绿变紫",
             "qspgl": "趋势专家 - 趋势线紫变绿",
             "qsrbd": "趋势专家 - 连续红柱天数",
+            "qsatm": "趋势专家 - ATM",
             "DKWR": "多空王 - 红飘带",
             "DKWB": "多空王 - 蓝飘带",
             "DKWR2B": "多空王 - 飘带红变蓝",
