@@ -20,7 +20,8 @@ print("Firebase initialized successfully!")
 
 def get_latest_date():
     """Fetch the last updated date from Firestore (only once)."""
-    doc_ref = db.collection("data_date").document(f"latest_date_{exchange}")
+    selected_exchange = st.session_state.get("selected_exchange", "MYX")
+    doc_ref = db.collection("data_date").document(f"latest_date_{selected_exchange}")
     doc = doc_ref.get()
 
     if doc.exists:
