@@ -599,19 +599,19 @@ def main():
 
     else:
         st.sidebar.button("登出 Logout", on_click=logout_user)
-
-        exchange = st.selectbox("📈 所选股市：Select Exchange：", ["MYX", "HKEX"])
+        st.markdown(f"### 📈 所选股市：   Select Exchange：")
+        exchange = st.selectbox("", ["MYX", "HKEX"])
         st.session_state['selected_exchange'] = exchange
         st.write(" ")
         st.write(" ")
 
         # Checkboxes for indicators
         st.markdown(
-            "<h5>⭐ <span style='color: #FF4500; font-size: 20px;'>选股条件 Stock Screening Criteria</span> ⭐</h5>",
+            "<h5>⭐ <span style='color: #FF4500; font-size: 30px;'>选股条件 Stock Screening Criteria</span> ⭐</h5>",
             unsafe_allow_html=True
         )
-        st.write("股票必须满足所有条件：")
-        st.write("Stocks must meet all the selected criteria:")
+        st.write("股票必须满足所有条件： Stocks must meet all the selected criteria:")
+        st.write("")
         col1, col2 = st.columns(2)
 
         with col1:
