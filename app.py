@@ -20,7 +20,7 @@ print("Firebase initialized successfully!")
 
 def get_latest_date():
     """Fetch the last updated date from Firestore (only once)."""
-    doc_ref = db.collection("data_date").document("latest_date_MYX")
+    doc_ref = db.collection("data_date").document(f"latest_date_{exchange}")
     doc = doc_ref.get()
 
     if doc.exists:
@@ -192,7 +192,8 @@ st.markdown(
 
 def download_file():
     """Retrieve all stock data from the `screened_result` collection and return as a DataFrame."""
-    collection_ref = db.collection("screened_result_MYX")
+    selected_exchange = st.session_state.get("selected_exchange", "MYX")  # Default to MYX if not set
+    collection_ref = db.collection(f"screened_result_{selected_exchange}")
     docs = collection_ref.stream()
 
     stock_list = []
@@ -201,7 +202,7 @@ def download_file():
         stock_list.append(stock_data)
 
     if not stock_list:
-        print("No data found in Firestore collection: screened_result_myx.")
+        print(f"No data found in Firestore collection: screened_result_{selected_exchange}.")
         return None
 
     # Convert list of stock data to Pandas DataFrame
@@ -210,7 +211,8 @@ def download_file():
 
 def load_stock_data(stock_symbol):
     """Load stock data from Firestore and return a Pandas DataFrame."""
-    doc_ref = db.collection("stocks_MYX").document(stock_symbol)  # Reference to Firestore document
+    selected_exchange = st.session_state.get("selected_exchange", "MYX")  # Default to MYX if not set
+    doc_ref = db.collection(f"stocks_{selected_exchange}").document(stock_symbol)  # Reference to Firestore document
     doc = doc_ref.get()  # Retrieve document
 
     if doc.exists:
@@ -555,6 +557,7 @@ def main():
         st.session_state['user_id'] = None
         st.session_state['otp_sent'] = False  # Track if OTP has been sent
         st.session_state["verified"] = False
+        st.session_state['selected_exchange'] = "MYX"
 
     if not st.session_state["logged_in"]:
         st.subheader("登入 Login")
@@ -595,9 +598,19 @@ def main():
 
     else:
         st.sidebar.button("登出 Logout", on_click=logout_user)
+
+        exchange = st.selectbox("📈 所选股市：Select Exchange：", ["MYX", "HKEX"])
+        st.session_state['selected_exchange'] = exchange
+        st.write(" ")
+        st.write(" ")
+
         # Checkboxes for indicators
-        st.write("选股条件（股票必须满足所有条件）：")
-        st.write("Select indicators (stocks must meet all selected criteria):")
+        st.markdown(
+            "<h5>⭐ <span style='color: #FF4500; font-size: 20px;'>选股条件 Stock Screening Criteria</span> ⭐</h5>",
+            unsafe_allow_html=True
+        )
+        st.write("股票必须满足所有条件：")
+        st.write("Stocks must meet all the selected criteria:")
         col1, col2 = st.columns(2)
 
         with col1:
@@ -847,14 +860,15 @@ def main():
                         file_data = file.readlines()
 
                     # Prefix each stock symbol with "MYX:"
-                    modified_data = "\n".join([f"MYX:{line.strip()}" for line in file_data])
+                    selected_exchange = st.session_state.get("selected_exchange", "MYX")  # Default to MYX if not set
+                    modified_data = "\n".join([f"{selected_exchange}:{line.strip()}" for line in file_data])
 
                     # Streamlit download button
                     if modified_data:
                         st.download_button(
                             label="下载名单 Download List",
                             data=modified_data,
-                            file_name=f"filtered_result_MYX_{today_date}.txt",
+                            file_name=f"filtered_result_{selected_exchange}_{today_date}.txt",
                             mime="text/plain"
                         )
                 except FileNotFoundError:
@@ -919,7 +933,7 @@ def main():
 
         # Display selected stock chart
         if st.session_state['selected_stock']:
-            display_stock = st.session_state['selected_stock'].replace('MYX:', '')
+            display_stock = st.session_state['selected_stock'].replace(f'{selected_exchange}:', '')
             display_chart(display_stock)
 
 
