@@ -603,7 +603,7 @@ def main():
         # Store the previous exchange selection
         previous_exchange = st.session_state["selected_exchange"]
         st.markdown(f"### 📈 所选股市：   Select Exchange：")
-        exchange = st.selectbox("", ["MYX", "HKEX"])
+        exchange = st.selectbox("", ["MYX", "HKEX", "USA"])
 
         # If user changes exchange, reset session state and refresh page
         if exchange != previous_exchange:
