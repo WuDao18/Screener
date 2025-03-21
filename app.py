@@ -607,8 +607,13 @@ def main():
 
         # If user changes exchange, reset session state and refresh page
         if exchange != previous_exchange:
-            st.session_state.clear()  # Reset everything to default
+            # Reset only relevant variables while keeping other session data
+            st.session_state['selected_stock'] = None
+            st.session_state['show_list'] = False
+            st.session_state['criteria'] = {}
+            st.session_state['matching_stocks'] = []
             st.session_state["selected_exchange"] = exchange  # Store new exchange
+
         st.write(" ")
         st.write(" ")
 
