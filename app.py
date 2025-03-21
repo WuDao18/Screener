@@ -547,7 +547,7 @@ def main():
     # Initialize the number of matching stocks
     temp_file_path = None
 
-    if 'logged_in' and 'otp_sent' not in st.session_state:
+    if 'logged_in' not in st.session_state and 'otp_sent' not in st.session_state:
         st.session_state['logged_in'] = False
         st.session_state['email'] = ""
         st.session_state['selected_stock'] = None
@@ -599,9 +599,16 @@ def main():
 
     else:
         st.sidebar.button("登出 Logout", on_click=logout_user)
+
+        # Store the previous exchange selection
+        previous_exchange = st.session_state["selected_exchange"]
         st.markdown(f"### 📈 所选股市：   Select Exchange：")
         exchange = st.selectbox("", ["MYX", "HKEX"])
-        st.session_state['selected_exchange'] = exchange
+
+        # If user changes exchange, reset session state and refresh page
+        if exchange != previous_exchange:
+            st.session_state.clear()  # Reset everything to default
+            st.session_state["selected_exchange"] = exchange  # Store new exchange
         st.write(" ")
         st.write(" ")
 
@@ -844,9 +851,9 @@ def main():
                 except Exception as e:
                     st.error(f"Error processing data: {str(e)}")
 
-        if exchange != st.session_state.selected_exchange: #detect changes in exchange
-            st.session_state.selected_exchange = exchange
-            st.session_state.matching_stocks = []  # Clear stock list
+        # if exchange != st.session_state.selected_exchange: #detect changes in exchange
+        #     st.session_state.selected_exchange = exchange
+        #     st.session_state.matching_stocks = []  # Clear stock list
 
         # Display matching stocks
         if st.session_state.get('show_list', False):
