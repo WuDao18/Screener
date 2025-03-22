@@ -537,6 +537,53 @@ def logout_user():
     st.session_state['selected_stock'] = None
     st.session_state['matching_stocks'] = []
 
+def reset_criteria():
+    if 'criteria' not in st.session_state:
+        st.session_state['criteria'] = {}  # Initialize an empty dictionary
+    """Reset all filter criteria to default values in session state."""
+    reset_values = {
+        "r1": False,
+        "r2": False,
+        "r3": False,
+        "n1": False,
+        "y1": False,
+        "zj": False,
+        "zjrbd": False,
+        "zjg2r": False,
+        "zjr2g": False,
+        "qsrbpl": False,
+        "qsrbd": False,
+        "qsgrb": False,
+        "qsrgb": False,
+        "qsgpl": False,
+        "qspgl": False,
+        "qsatm": False,
+        "DKWR": False,
+        "DKWB": False,
+        "DKWR2B": False,
+        "DKWB2R": False,
+        "DKWRD": 0,  # Default for selectbox
+        "DKWBD": 0,  # Default for selectbox
+        "min_volume": 0,  # Default numeric input
+        "min_price": 0,  # Default numeric input
+        "rsi": False,
+        "rsi_min": 0,  # Default numeric input
+        "rsi_max": 100,  # Default numeric input
+        "brsiMma": False,
+        "brsi1Mma": False,
+        "brsio": 0,  # Default operator selection
+        "brsi_value": 0,  # Default numeric input
+        "hrsio": 0,  # Default operator selection
+        "hrsi_value": 0,  # Default numeric input
+        "rrsio": 0,  # Default operator selection
+        "rrsi_value": 0  # Default numeric input
+    }
+
+    # Reset criteria in session state
+    st.session_state['criteria'] = reset_values
+
+    st.rerun()  # Refresh UI immediately
+
 def main():
     st.title("选股平台 Stock Screener")
     update = get_latest_date()
@@ -608,12 +655,11 @@ def main():
         # If user changes exchange, reset session state and refresh page
         if exchange != previous_exchange:
             # Reset only relevant variables while keeping other session data
-            st.session_state['criteria'] = {}
             st.session_state['selected_exchange'] = exchange  # Store new exchange
             st.session_state['selected_stock'] = None
             st.session_state['show_list'] = False
             st.session_state['matching_stocks'] = []
-            st.rerun()  # Force immediate UI refresh
+            reset_criteria()  # 🚀 Call reset function when exchange changes
 
         update = get_latest_date()
         st.markdown(f"### 📅 {exchange} 数据最后更新  {exchange} Data Last Update: {update}")
