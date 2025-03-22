@@ -613,6 +613,7 @@ def main():
             st.session_state['selected_stock'] = None
             st.session_state['show_list'] = False
             st.session_state['matching_stocks'] = []
+            st.rerun()  # Force immediate UI refresh
 
         update = get_latest_date()
         st.markdown(f"### 📅 {exchange} 数据最后更新  {exchange} Data Last Update: {update}")
