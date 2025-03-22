@@ -565,18 +565,18 @@ def reset_criteria():
         "DKWRD": 0,  # Default for selectbox
         "DKWBD": 0,  # Default for selectbox
         "min_volume": 0,  # Default numeric input
-        "min_price": 0,  # Default numeric input
+        "min_price": 0.0,  # Default numeric input
         "rsi": False,
         "rsi_min": 0,  # Default numeric input
         "rsi_max": 100,  # Default numeric input
         "brsiMma": False,
         "brsi1Mma": False,
         "brsio": 0,  # Default operator selection
-        "brsi_value": 0,  # Default numeric input
+        "brsi_value": 0.0,  # Default numeric input
         "hrsio": 0,  # Default operator selection
-        "hrsi_value": 0,  # Default numeric input
+        "hrsi_value": 0.0,  # Default numeric input
         "rrsio": 0,  # Default operator selection
-        "rrsi_value": 0  # Default numeric input
+        "rrsi_value": 0.0  # Default numeric input
     }
 
     # Reset criteria in session state
@@ -777,7 +777,7 @@ def main():
                                                       index=[0, ">=", "<=", "="].index(st.session_state['criteria'].get('brsio', 0)), key="brsi_operator")
             with col2:
                 brsi_value = st.number_input(" ", min_value=0.0, max_value=100.0, key="brsi_value",
-                                             value=float(st.session_state['criteria'].get('brsi_value', 0)), step=0.1,
+                                             value=float(st.session_state['criteria'].get('brsi_value', 0.0)), step=0.1,
                                              disabled=(brsi_operator_selected == 0))
             if brsi_operator_selected == 0:
                 brsi_value = 0.0  # Reset stored value
@@ -789,7 +789,7 @@ def main():
                                                       index=[0, ">=", "<=", "="].index(st.session_state['criteria'].get('hrsio', 0)), key="hrsi_operator")
             with col2:
                 hrsi_value = st.number_input(" ", min_value=0.0, max_value=100.0, key="hrsi_value",
-                                             value=float(st.session_state['criteria'].get('hrsi_value', 0)), step=0.1,
+                                             value=float(st.session_state['criteria'].get('hrsi_value', 0.0)), step=0.1,
                                              disabled=(hrsi_operator_selected == 0))
             if hrsi_operator_selected == 0:
                 hrsi_value = 0.0  # Reset stored value
@@ -801,7 +801,7 @@ def main():
                                                       index=[0, ">=", "<=", "="].index(st.session_state['criteria'].get('rrsio', 0)),key="rrsi_operator")
             with col2:
                 rrsi_value = st.number_input(" ", min_value=0.0, max_value=100.0, key="rrsi_value",
-                                             value=float(st.session_state['criteria'].get('rrsi_value', 0)), step=0.1,
+                                             value=float(st.session_state['criteria'].get('rrsi_value', 0.0)), step=0.1,
                                              disabled=(rrsi_operator_selected == 0))
             if rrsi_operator_selected == 0:
                 rrsi_value = 0.0  # Reset stored value
