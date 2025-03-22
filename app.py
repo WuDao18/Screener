@@ -641,6 +641,10 @@ def main():
             r3_selected = st.checkbox("均线： 60日 > 120日 > 240日", key="r3_check",
                                       value=st.session_state['criteria'].get('r3', False))
 
+            # st.session_state["criteria"]["r1"] = r1_selected
+            # st.session_state["criteria"]["r2"] = r2_selected
+            # st.session_state["criteria"]["r3"] = r3_selected
+
             st.write(" ")
             st.write(" ")
             st.markdown(
@@ -662,6 +666,7 @@ def main():
             qsbar_selected = st.selectbox(
                 "连续红柱天数:",
                 options=[0, 2, 3, 4, 5],
+                index=[0, 2, 3, 4, 5].index(st.session_state['criteria'].get('qsrbd', 0)),
                 key="qs_rbd_check"
             )
 
@@ -673,16 +678,18 @@ def main():
             )
             DKWR_selected = st.checkbox("红飘带", key="DKWR_check", value=st.session_state['criteria'].get('DKWR', False))
             DKWB_selected = st.checkbox("蓝飘带", key="DKWB_check", value=st.session_state['criteria'].get('DKWB', False))
-            R2B_selected = st.checkbox("飘带红变蓝", key="R2B_check", value=st.session_state['criteria'].get('R2B', False))
-            B2R_selected = st.checkbox("飘带蓝变红", key="B2R_check", value=st.session_state['criteria'].get('B2R', False))
+            R2B_selected = st.checkbox("飘带红变蓝", key="R2B_check", value=st.session_state['criteria'].get('DKWR2B', False))
+            B2R_selected = st.checkbox("飘带蓝变红", key="B2R_check", value=st.session_state['criteria'].get('DKWB2R', False))
             DKWRD_selected = st.selectbox(
                 "连续红飘带天数:",
                 options=[0, 2, 3, 4, 5],
+                index=[0, 2, 3, 4, 5].index(st.session_state['criteria'].get('DKWRD', 0)),
                 key="DKWRD_check"
             )
             DKWBD_selected = st.selectbox(
                 "连续蓝飘带天数:",
                 options=[0, 2, 3, 4, 5],
+                index=[0, 2, 3, 4, 5].index(st.session_state['criteria'].get('DKWBD', 0)),
                 key="DKWBD_check"
             )
 
@@ -701,6 +708,7 @@ def main():
             zjbar_selected = st.selectbox(
                 "连续红柱天数:",
                 options=[0, 2, 3, 4, 5],
+                index=[0, 2, 3, 4, 5].index(st.session_state['criteria'].get('zjrbd', 0)),
                 key="zj_rbd_check"
             )
 
@@ -718,7 +726,8 @@ def main():
             # st.write("主力： ")
             col1, col2 = st.columns([0.5, 1])  # Adjust width as needed
             with col1:
-                brsi_operator_selected = st.selectbox(" 主力：", options=[0, ">=", "<=", "="], key="brsi_operator")
+                brsi_operator_selected = st.selectbox(" 主力：", options=[0, ">=", "<=", "="],
+                                                      index=[0, ">=", "<=", "="].index(st.session_state['criteria'].get('brsio', 0)), key="brsi_operator")
             with col2:
                 brsi_value = st.number_input(" ", min_value=0.0, max_value=100.0, key="brsi_value",
                                              value=float(st.session_state['criteria'].get('brsi_value', 0)), step=0.1,
@@ -729,7 +738,8 @@ def main():
             # st.write("游资： ")
             col1, col2 = st.columns([0.5, 1])  # Adjust width as needed
             with col1:
-                hrsi_operator_selected = st.selectbox(" 游资：", options=[0, ">=", "<=", "="], key="hrsi_operator")
+                hrsi_operator_selected = st.selectbox(" 游资：", options=[0, ">=", "<=", "="],
+                                                      index=[0, ">=", "<=", "="].index(st.session_state['criteria'].get('hrsio', 0)), key="hrsi_operator")
             with col2:
                 hrsi_value = st.number_input(" ", min_value=0.0, max_value=100.0, key="hrsi_value",
                                              value=float(st.session_state['criteria'].get('hrsi_value', 0)), step=0.1,
@@ -740,7 +750,8 @@ def main():
             # st.write("散户： ")
             col1, col2 = st.columns([0.5, 1])  # Adjust width as needed
             with col1:
-                rrsi_operator_selected = st.selectbox(" 散户：", options=[0, ">=", "<=", "="], key="rrsi_operator")
+                rrsi_operator_selected = st.selectbox(" 散户：", options=[0, ">=", "<=", "="],
+                                                      index=[0, ">=", "<=", "="].index(st.session_state['criteria'].get('rrsio', 0)),key="rrsi_operator")
             with col2:
                 rrsi_value = st.number_input(" ", min_value=0.0, max_value=100.0, key="rrsi_value",
                                              value=float(st.session_state['criteria'].get('rrsi_value', 0)), step=0.1,
