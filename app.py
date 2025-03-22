@@ -582,6 +582,14 @@ def reset_criteria():
     # Reset criteria in session state
     st.session_state['criteria'] = reset_values
 
+    st.session_state.pop("DKWRD_check", 0)
+    st.session_state.pop("DKWBD_check", 0)
+    st.session_state.pop("qs_rbd_check", 0)
+    st.session_state.pop("zj_rbd_check", 0)
+    st.session_state.pop("brsi_operator", 0)
+    st.session_state.pop("hrsi_operator", 0)
+    st.session_state.pop("rrsi_operator", 0)
+
     st.rerun()  # Refresh UI immediately
 
 def main():
@@ -688,9 +696,6 @@ def main():
             r3_selected = st.checkbox("均线： 60日 > 120日 > 240日", key="r3_check",
                                       value=st.session_state['criteria'].get('r3', False))
 
-            # st.session_state["criteria"]["r1"] = r1_selected
-            # st.session_state["criteria"]["r2"] = r2_selected
-            # st.session_state["criteria"]["r3"] = r3_selected
 
             st.write(" ")
             st.write(" ")
