@@ -601,18 +601,18 @@ def main():
         st.sidebar.button("登出 Logout", on_click=logout_user)
 
         # Store the previous exchange selection
-        previous_exchange = st.session_state["selected_exchange"]
+        previous_exchange = st.session_state['selected_exchange']
         st.markdown(f"### 📈 所选股市：   Select Exchange：")
         exchange = st.selectbox("", ["MYX", "USA", "HKEX", "CHINA", "SGX"])
 
         # If user changes exchange, reset session state and refresh page
         if exchange != previous_exchange:
             # Reset only relevant variables while keeping other session data
+            st.session_state['criteria'] = {}
+            st.session_state['selected_exchange'] = exchange  # Store new exchange
             st.session_state['selected_stock'] = None
             st.session_state['show_list'] = False
-            st.session_state['criteria'] = {}
             st.session_state['matching_stocks'] = []
-            st.session_state["selected_exchange"] = exchange  # Store new exchange
 
         update = get_latest_date()
         st.markdown(f"### 📅 {exchange} 数据最后更新  {exchange} Data Last Update: {update}")
