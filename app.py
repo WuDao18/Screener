@@ -589,7 +589,7 @@ def main():
         st.session_state['otp_sent'] = False  # Track if OTP has been sent
         st.session_state["verified"] = False
         st.session_state['selected_exchange'] = "MYX"
-        st.session_state['Period'] = "Daily"
+        st.session_state['period'] = "Daily"
 
     if not st.session_state["logged_in"]:
         st.subheader("登入 Login")
