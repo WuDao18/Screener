@@ -439,6 +439,8 @@ def calculate_trend_data(df):
 # Function to display chart
 def display_chart(stock_symbol):
     df = load_stock_data(stock_symbol)
+    timeframe = st.session_state.get("period", "Daily")
+
     if df is None:
         st.error(f"No data available for the stock symbol '{stock_symbol}'. Please check the symbol or the data file.")
         return
@@ -447,8 +449,12 @@ def display_chart(stock_symbol):
         # Ensure 'datetime' is a pandas datetime type
         df['date'] = pd.to_datetime(df.index)
 
-        # Filter to keep only the last 120 rows
-        df = df.tail(120)
+        if timeframe == "Weekly":
+            # Filter to keep only the last 2 years
+            df = df.tail(96)
+        else:
+            # Filter to keep only the last 120 rows - 6 months
+            df = df.tail(120)
 
         # Create a full range of dates from the minimum to the maximum date in your data
         all_dates = pd.date_range(start=df['date'].min(), end=df['date'].max())
@@ -524,8 +530,13 @@ def display_chart(stock_symbol):
             ]
         )
 
+        if timeframe == "Weekly":
+            title = f"两年走势图 - {stock_symbol} ({timeframe} Chart)"  # 2 years for Weekly
+        else:
+            title = f"六个月走势图 - {stock_symbol} ({timeframe} Chart)"  # 6 months for Daily
+
         fig.update_layout(
-            title=f"六个月走势图 {stock_symbol}",
+            title= title,
             xaxis=dict(
                 title=None,
                 showgrid=False,
@@ -624,19 +635,20 @@ def main():
         previous_exchange = st.session_state['selected_exchange']
         st.markdown(f"### 📈 所选股市：   Select Exchange：")
         exchange = st.selectbox("", ["MYX", "USA", "HKEX", "SSE", "SZSE","SGX"])
+        st.write(" ")
+        st.write(" ")
+        previous_timeframe = st.session_state['period']
+        st.markdown("### 🕒 图表周期 (Chart Interval)")
+        timeframe = st.selectbox("", ["Daily", "Weekly"])
+        st.session_state['period'] = timeframe
 
         # If user changes exchange, reset session state and refresh page
-        if exchange != previous_exchange:
+        if exchange != previous_exchange or timeframe != previous_timeframe:
             # Reset only relevant variables while keeping other session data
             st.session_state['selected_exchange'] = exchange  # Store new exchange
             st.session_state['selected_stock'] = None
             st.session_state['show_list'] = False
             st.session_state['matching_stocks'] = []
-            #reset_criteria()  # 🚀 Call reset function when exchange changes
-
-        st.markdown("### 🕒 图表周期 (Chart Interval)")
-        timeframe = st.selectbox("", ["Daily", "Weekly"])
-        st.session_state['period'] = timeframe
 
         update = get_latest_date()
         st.markdown(f"### 📅 {exchange}-{timeframe} 数据最后更新 (Data Last Update): {update}")
@@ -920,6 +932,7 @@ def main():
 
                     # Prefix each stock symbol with "MYX:"
                     selected_exchange = st.session_state.get("selected_exchange", "MYX")  # Default to MYX if not set
+                    timeframe = st.session_state.get("period", "Daily")
                     modified_data = "\n".join([f"{selected_exchange}:{line.strip()}" for line in file_data])
 
                     # Streamlit download button
@@ -927,17 +940,11 @@ def main():
                         st.download_button(
                             label="下载名单 Download List",
                             data=modified_data,
-                            file_name=f"filtered_result_{selected_exchange}_{today_date}.txt",
+                            file_name=f"filtered_result_{selected_exchange}-{timeframe}_{today_date}.txt",
                             mime="text/plain"
                         )
                 except FileNotFoundError:
                     st.warning("No file available to download.")
-
-        # Manual stock symbol input
-        # stock_input = st.text_input("或输入股票代码以查看图表： Or enter a stock symbol for chart viewing:")
-        # if stock_input:
-        #     select_stock(stock_input.strip())
-        #     st.session_state['selected_stock'] = stock_input.strip()
 
         # Define a mapping for display labels
         criteria_labels = {
