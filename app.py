@@ -21,8 +21,13 @@ print("Firebase initialized successfully!")
 def get_latest_date():
     """Fetch the last updated date from Firestore (only once)."""
     selected_exchange = st.session_state.get("selected_exchange", "MYX")
-    doc_ref = db.collection("data_date").document(f"latest_date_{selected_exchange}")
-    doc = doc_ref.get()
+    timeframe = st.session_state.get("period","Daily")
+    if timeframe == "Weekly":
+        doc_ref = db.collection("data_date").document(f"latest_date_{selected_exchange}_Weekly")
+        doc = doc_ref.get()
+    else:
+        doc_ref = db.collection("data_date").document(f"latest_date_{selected_exchange}")
+        doc = doc_ref.get()
 
     if doc.exists:
       #  print(f"Last recorded date: {doc.to_dict().get('date')}")
@@ -194,8 +199,15 @@ st.markdown(
 def download_file():
     """Retrieve all stock data from the `screened_result` collection and return as a DataFrame."""
     selected_exchange = st.session_state.get("selected_exchange", "MYX")  # Default to MYX if not set
-    collection_ref = db.collection(f"screened_result_{selected_exchange}")
-    docs = collection_ref.stream()
+    timeframe = st.session_state.get("period", "Daily")
+
+    if timeframe == "Weekly":
+        collection_ref = db.collection(f"screened_result_{selected_exchange}_Weekly")
+        docs = collection_ref.stream()
+
+    else:
+        collection_ref = db.collection(f"screened_result_{selected_exchange}")
+        docs = collection_ref.stream()
 
     stock_list = []
     for doc in docs:
@@ -203,7 +215,7 @@ def download_file():
         stock_list.append(stock_data)
 
     if not stock_list:
-        print(f"No data found in Firestore collection: screened_result_{selected_exchange}.")
+        print(f"No data found in Firestore collection: screened_result_{selected_exchange}_{timeframe}.")
         return None
 
     # Convert list of stock data to Pandas DataFrame
@@ -213,8 +225,15 @@ def download_file():
 def load_stock_data(stock_symbol):
     """Load stock data from Firestore and return a Pandas DataFrame."""
     selected_exchange = st.session_state.get("selected_exchange", "MYX")  # Default to MYX if not set
-    doc_ref = db.collection(f"stocks_{selected_exchange}").document(stock_symbol)  # Reference to Firestore document
-    doc = doc_ref.get()  # Retrieve document
+    timeframe = st.session_state.get("period", "Daily")
+
+    if timeframe == "Weekly":
+        doc_ref = db.collection(f"stocks_{selected_exchange}_Weekly").document(stock_symbol)  # Reference to Firestore document
+        doc = doc_ref.get()  # Retrieve document
+
+    else:
+        doc_ref = db.collection(f"stocks_{selected_exchange}").document(stock_symbol)  # Reference to Firestore document
+        doc = doc_ref.get()  # Retrieve document
 
     if doc.exists:
         stock_data = doc.to_dict().get("data", [])  # Get the 'data' list
@@ -224,10 +243,10 @@ def load_stock_data(stock_symbol):
             df = df.set_index("date")  # Set 'date' as the index
             return df
         else:
-            st.error(f"No data available for {stock_symbol}.")
+            st.error(f"No data available for {stock_symbol}- {timeframe}.")
             return None
     else:
-        st.error(f"Stock {stock_symbol} not found in Firestore.")
+        st.error(f"Stock {stock_symbol} - {timeframe} not found in Firestore.")
         return None
 
 def display_symbols_dropdown(symbols):
@@ -537,61 +556,6 @@ def logout_user():
     st.session_state['selected_stock'] = None
     st.session_state['matching_stocks'] = []
 
-# def reset_criteria():
-#     if 'criteria' not in st.session_state:
-#         st.session_state['criteria'] = {}  # Initialize an empty dictionary
-#     """Reset all filter criteria to default values in session state."""
-#     reset_values = {
-#         "r1": False,
-#         "r2": False,
-#         "r3": False,
-#         "n1": False,
-#         "y1": False,
-#         "zj": False,
-#         "zjrbd": 0,
-#         "zjg2r": False,
-#         "zjr2g": False,
-#         "qsrbpl": False,
-#         "qsrbd": 0,
-#         "qsgrb": False,
-#         "qsrgb": False,
-#         "qsgpl": False,
-#         "qspgl": False,
-#         "qsatm": False,
-#         "DKWR": False,
-#         "DKWB": False,
-#         "DKWR2B": False,
-#         "DKWB2R": False,
-#         "DKWRD": 0,  # Default for selectbox
-#         "DKWBD": 0,  # Default for selectbox
-#         "min_volume": 0,  # Default numeric input
-#         "min_price": 0.0,  # Default numeric input
-#         "rsi": False,
-#         "rsi_min": 0,  # Default numeric input
-#         "rsi_max": 100,  # Default numeric input
-#         "brsiMma": False,
-#         "brsi1Mma": False,
-#         "brsio": 0,  # Default operator selection
-#         "brsi_value": 0.0,  # Default numeric input
-#         "hrsio": 0,  # Default operator selection
-#         "hrsi_value": 0.0,  # Default numeric input
-#         "rrsio": 0,  # Default operator selection
-#         "rrsi_value": 0.0  # Default numeric input
-#     }
-#
-#     # Reset criteria in session state
-#     st.session_state['criteria'] = reset_values
-#
-#     st.session_state.pop("DKWRD_check", 0)
-#     st.session_state.pop("DKWBD_check", 0)
-#     st.session_state.pop("qs_rbd_check", 0)
-#     st.session_state.pop("zj_rbd_check", 0)
-#     st.session_state.pop("brsi_operator", 0)
-#     st.session_state.pop("hrsi_operator", 0)
-#     st.session_state.pop("rrsi_operator", 0)
-#
-#     st.rerun()  # Refresh UI immediately
-
 def main():
     st.title("选股平台 Stock Screener")
     update = get_latest_date()
@@ -614,6 +578,7 @@ def main():
         st.session_state['otp_sent'] = False  # Track if OTP has been sent
         st.session_state["verified"] = False
         st.session_state['selected_exchange'] = "MYX"
+        st.session_state['Period'] = "Daily"
 
     if not st.session_state["logged_in"]:
         st.subheader("登入 Login")
@@ -669,8 +634,12 @@ def main():
             st.session_state['matching_stocks'] = []
             #reset_criteria()  # 🚀 Call reset function when exchange changes
 
+        st.markdown("### 🕒 图表周期 (Chart Interval)")
+        timeframe = st.selectbox("", ["Daily", "Weekly"])
+        st.session_state['period'] = timeframe
+
         update = get_latest_date()
-        st.markdown(f"### 📅 {exchange} 数据最后更新  {exchange} Data Last Update: {update}")
+        st.markdown(f"### 📅 {exchange}-{timeframe} 数据最后更新 (Data Last Update): {update}")
 
         st.write(" ")
         st.write(" ")
@@ -843,10 +812,17 @@ def main():
             st.write(" ")
             st.write(" ")
             st.markdown(
-                "<h5>🔷 <span style='color: #1E90FF; font-size: 20px;'>单一指标</span> 🔷</h5>",
+                "<h5>🔷 <span style='color: #1E90FF; font-size: 20px;'>神奇九转</span> 🔷</h5>",
                 unsafe_allow_html=True
             )
             n1_selected = st.checkbox("牛一", key="n1_check", value=st.session_state['criteria'].get('n1', False))
+
+            st.write(" ")
+            st.write(" ")
+            st.markdown(
+                "<h5>🔷 <span style='color: #1E90FF; font-size: 20px;'>单一指标</span> 🔷</h5>",
+                unsafe_allow_html=True
+            )
             y1_selected = st.checkbox("第一黄柱", key="y1_check", value=st.session_state['criteria'].get('y1', False))
 
 
