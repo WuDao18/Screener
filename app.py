@@ -853,7 +853,7 @@ def main():
                 unsafe_allow_html=True
             )
             n1_selected = st.checkbox("牛一", key="n1_check", value=st.session_state['criteria'].get('n1', False))
-            x9_selected = st.checkbox("牛一", key="x9_check", value=st.session_state['criteria'].get('x9', False))
+            x9_selected = st.checkbox("熊九", key="x9_check", value=st.session_state['criteria'].get('x9', False))
 
             st.write(" ")
             st.write(" ")
