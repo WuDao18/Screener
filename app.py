@@ -277,6 +277,8 @@ def check_indicators_and_save(df, min_volume, min_price, brsi_value, hrsi_value,
             mask &= (df['r3'] == 1)
         if st.session_state.get('n1_check', False):
             mask &= (df['n1'] == 1)
+        if st.session_state.get('x9_check', False):
+            mask &= (df['x9'] == 1)
         if st.session_state.get('y1_check', False):
             mask &= (df['y1'] == 1)
         if st.session_state.get('DKWR_check', False):
@@ -851,6 +853,7 @@ def main():
                 unsafe_allow_html=True
             )
             n1_selected = st.checkbox("牛一", key="n1_check", value=st.session_state['criteria'].get('n1', False))
+            x9_selected = st.checkbox("牛一", key="x9_check", value=st.session_state['criteria'].get('x9', False))
 
             st.write(" ")
             st.write(" ")
@@ -875,6 +878,7 @@ def main():
             'r2': r2_selected,
             'r3': r3_selected,
             'n1': n1_selected,
+            'x9': x9_selected,
             'y1': y1_selected,
             'zj': zj_selected,
             'zjrbd': zjbar_selected,
@@ -979,6 +983,7 @@ def main():
             "r2": "五道彩图均线： 20日 > 30日 > 60日",
             "r3": "五道彩图均线： 60日 > 120日 > 240日",
             "n1": "牛一",
+            "x9": "熊九",
             "y1": "第一黄柱",
             "zj": "资金所向 - 水上红柱",
             "zjg2r": "资金所向 - 绿变红",
