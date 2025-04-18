@@ -1,3 +1,6 @@
+#current verion updated 18/4/25
+#include weekly and all countries
+
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -284,6 +287,12 @@ def check_indicators_and_save(df, min_volume, min_price, brsi_value, hrsi_value,
             mask &= (df['DKW_R2B'] == 1)
         if st.session_state.get('B2R_check', False):
             mask &= (df['DKW_B2R'] == 1)
+        if st.session_state.get('ZLB0_check', False):
+            mask &= (df['zlB0'] == 1)
+        if st.session_state.get('ZLG2R_check', False):
+            mask &= (df['zlG2R'] == 1)
+        if st.session_state.get('ZLR2G_check', False):
+            mask &= (df['zlR2G'] == 1)
         if st.session_state.get('brsiMma_check', False):
             mask &= (df['brsiMma'] == 1)
         if st.session_state.get('brsi1Mma_check', False):
@@ -302,6 +311,8 @@ def check_indicators_and_save(df, min_volume, min_price, brsi_value, hrsi_value,
             mask &= (df['qsPGL'] == 1)
         if st.session_state.get('qs_atm_check', False):
             mask &= (df['qsATM'] == 1)
+        if st.session_state.get('qs_atmS_check', False):
+            mask &= (df['qsATMS'] == 1)
         if st.session_state.get('qs_rbd_check', False):
             qs_selection = st.session_state.get('qs_rbd_check', 0)
             if qs_selection == 2:
@@ -634,7 +645,7 @@ def main():
         # Store the previous exchange selection
         previous_exchange = st.session_state['selected_exchange']
         st.markdown(f"### 📈 所选股市：   Select Exchange：")
-        exchange = st.selectbox("", ["MYX", "USA", "HKEX", "SSE", "SZSE","SGX"])
+        exchange = st.selectbox("", ["MYX", "NASDAQ", "NYSE", "HKEX", "SSE", "SZSE","SGX"])
         st.write(" ")
         st.write(" ")
         previous_timeframe = st.session_state['period']
@@ -694,8 +705,10 @@ def main():
                                          value=st.session_state['criteria'].get('qsgpl', False))
             qspgl_selected = st.checkbox("趋势线紫变绿", key="qs_pgl_check",
                                          value=st.session_state['criteria'].get('qspgl', False))
-            qsatm_selected = st.checkbox("ATM", key="qs_atm_check",
+            qsatm_selected = st.checkbox("ATM （宽松版）", key="qs_atm_check",
                                          value=st.session_state['criteria'].get('qsatm', False))
+            qsatmS_selected = st.checkbox("ATM （严谨版）", key="qs_atmS_check",
+                                         value=st.session_state['criteria'].get('qsatmS', False))
             qsbar_selected = st.selectbox(
                 "连续红柱天数:",
                 options=[0, 2, 3, 4, 5],
@@ -725,6 +738,16 @@ def main():
                 index=[0, 2, 3, 4, 5].index(st.session_state['criteria'].get('DKWBD', 0)),
                 key="DKWBD_check"
             )
+
+            st.write(" ")
+            st.write(" ")
+            st.markdown(
+                "<h5>🔷 <span style='color: #1E90FF; font-size: 20px;'>主力资金</span> 🔷</h5>",
+                unsafe_allow_html=True
+            )
+            ZLB0_selected = st.checkbox("突破零轴线", key="ZLB0_check", value=st.session_state['criteria'].get('ZLB0', False))
+            ZLG2R_selected = st.checkbox("绿变红", key="ZLG2R_check", value=st.session_state['criteria'].get('ZLG2R', False))
+            ZLR2G_selected = st.checkbox("红变绿", key="ZLR2G_check", value=st.session_state['criteria'].get('ZLR2G', False))
 
 
         with col2:
@@ -864,12 +887,16 @@ def main():
             'qsgpl': qsgpl_selected,
             'qspgl': qspgl_selected,
             'qsatm': qsatm_selected,
+            'qsatmS': qsatmS_selected,
             'DKWR': DKWR_selected,
             'DKWB': DKWB_selected,
             'DKWR2B': R2B_selected,
             'DKWB2R': B2R_selected,
             'DKWRD':DKWRD_selected,
             'DKWBD':DKWBD_selected,
+            'ZLB0': ZLB0_selected,
+            'ZLG2R': ZLG2R_selected,
+            'ZLR2G': ZLR2G_selected,
             'min_volume': min_volume,
             'min_price': min_price,
             'rsi': rsi_selected,
@@ -963,13 +990,17 @@ def main():
             "qsgpl": "趋势专家 - 趋势线绿变紫",
             "qspgl": "趋势专家 - 趋势线紫变绿",
             "qsrbd": "趋势专家 - 连续红柱天数",
-            "qsatm": "趋势专家 - ATM",
+            "qsatm": "趋势专家 - ATM (宽松版）",
+            "qsatmS": "趋势专家 - ATM (严谨版）",
             "DKWR": "多空王 - 红飘带",
             "DKWB": "多空王 - 蓝飘带",
             "DKWR2B": "多空王 - 飘带红变蓝",
             "DKWB2R": "多空王 - 飘带蓝变红",
             "DKWRD": "多空王 - 连续红飘带天数",
             "DKWBD": "多空王 - 连续蓝飘带天数",
+            "ZLB0": "主力资金 - 突破零轴线",
+            "ZLG2R": "主力资金 - 绿变红",
+            "ZLR2G": "主力资金 - 红变绿",
             "min_volume": "最低成交量（100k的倍数）",
             "min_price": "最低股价",
             "rsi": "RSI",
