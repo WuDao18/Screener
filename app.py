@@ -291,6 +291,8 @@ def check_indicators_and_save(df, min_volume, min_price, brsi_value, hrsi_value,
             mask &= (df['DKW_B2R'] == 1)
         if st.session_state.get('ZLB0_check', False):
             mask &= (df['zlB0'] == 1)
+        if st.session_state.get('ZLR_check', False):
+            mask &= (df['zlR'] == 1)
         if st.session_state.get('ZLG2R_check', False):
             mask &= (df['zlG2R'] == 1)
         if st.session_state.get('ZLR2G_check', False):
@@ -748,6 +750,8 @@ def main():
                 unsafe_allow_html=True
             )
             ZLB0_selected = st.checkbox("突破零轴线", key="ZLB0_check", value=st.session_state['criteria'].get('ZLB0', False))
+            ZLR_selected = st.checkbox("红色", key="ZLR_check",
+                                        value=st.session_state['criteria'].get('ZLR', False))
             ZLG2R_selected = st.checkbox("绿变红", key="ZLG2R_check", value=st.session_state['criteria'].get('ZLG2R', False))
             ZLR2G_selected = st.checkbox("红变绿", key="ZLR2G_check", value=st.session_state['criteria'].get('ZLR2G', False))
 
@@ -899,6 +903,7 @@ def main():
             'DKWRD':DKWRD_selected,
             'DKWBD':DKWBD_selected,
             'ZLB0': ZLB0_selected,
+            'ZLR': ZLR_selected,
             'ZLG2R': ZLG2R_selected,
             'ZLR2G': ZLR2G_selected,
             'min_volume': min_volume,
@@ -982,8 +987,8 @@ def main():
             "r1": "五道彩图均线： 5日 > 10日 > 20日",
             "r2": "五道彩图均线： 20日 > 30日 > 60日",
             "r3": "五道彩图均线： 60日 > 120日 > 240日",
-            "n1": "牛一",
-            "x9": "熊九",
+            "n1": "神奇九转 - 牛一",
+            "x9": "神奇九转 - 熊九",
             "y1": "第一黄柱",
             "zj": "资金所向 - 水上红柱",
             "zjg2r": "资金所向 - 绿变红",
@@ -1006,6 +1011,7 @@ def main():
             "ZLB0": "主力资金 - 突破零轴线",
             "ZLG2R": "主力资金 - 绿变红",
             "ZLR2G": "主力资金 - 红变绿",
+            "ZLR": "主力资金 - 红色",
             "min_volume": "最低成交量（100k的倍数）",
             "min_price": "最低股价",
             "rsi": "RSI",
