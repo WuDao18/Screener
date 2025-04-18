@@ -281,6 +281,14 @@ def check_indicators_and_save(df, min_volume, min_price, brsi_value, hrsi_value,
             mask &= (df['x9'] == 1)
         if st.session_state.get('y1_check', False):
             mask &= (df['y1'] == 1)
+        if st.session_state.get('gc_check', False):
+            mask &= (df['MACDGC'] == 1)
+        if st.session_state.get('dc_check', False):
+            mask &= (df['MACDDC'] == 1)
+        if st.session_state.get('a0_check', False):
+            mask &= (df['MACDA0'] == 1)
+        if st.session_state.get('b0_check', False):
+            mask &= (df['MACDB0'] == 1)
         if st.session_state.get('DKWR_check', False):
             mask &= (df['DKW'] == 1)
         if st.session_state.get('DKWB_check', False):
@@ -862,6 +870,17 @@ def main():
             st.write(" ")
             st.write(" ")
             st.markdown(
+                "<h5>🔷 <span style='color: #1E90FF; font-size: 20px;'>MACD</span> 🔷</h5>",
+                unsafe_allow_html=True
+            )
+            gc_selected = st.checkbox("金叉", key="gc_check", value=st.session_state['criteria'].get('gc', False))
+            dc_selected = st.checkbox("死叉", key="dc_check", value=st.session_state['criteria'].get('dc', False))
+            a0_selected = st.checkbox("零轴上", key="a0_check", value=st.session_state['criteria'].get('a0', False))
+            b0_selected = st.checkbox("零轴下", key="b0_check", value=st.session_state['criteria'].get('b0', False))
+
+            st.write(" ")
+            st.write(" ")
+            st.markdown(
                 "<h5>🔷 <span style='color: #1E90FF; font-size: 20px;'>单一指标</span> 🔷</h5>",
                 unsafe_allow_html=True
             )
@@ -906,6 +925,10 @@ def main():
             'ZLR': ZLR_selected,
             'ZLG2R': ZLG2R_selected,
             'ZLR2G': ZLR2G_selected,
+            'dc':dc_selected,
+            'gc':gc_selected,
+            'a0':a0_selected,
+            'b0':b0_selected,
             'min_volume': min_volume,
             'min_price': min_price,
             'rsi': rsi_selected,
@@ -990,6 +1013,10 @@ def main():
             "n1": "神奇九转 - 牛一",
             "x9": "神奇九转 - 熊九",
             "y1": "第一黄柱",
+            "dc": "MACD - 死叉",
+            "gc": "MACD - 金叉",
+            "a0": "MACD - 零轴上",
+            "b0": "MACD - 零轴下",
             "zj": "资金所向 - 水上红柱",
             "zjg2r": "资金所向 - 绿变红",
             "zjr2g": "资金所向 - 红变绿",
