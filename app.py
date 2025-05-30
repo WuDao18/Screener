@@ -281,6 +281,14 @@ def check_indicators_and_save(df, min_volume, min_price, brsi_value, hrsi_value,
             mask &= (df['x9'] == 1)
         if st.session_state.get('y1_check', False):
             mask &= (df['y1'] == 1)
+        if st.session_state.get('vm_check', False):
+            mask &= (df['volumeM'] == 1)
+        if st.session_state.get('vm2_check', False):
+            mask &= (df['volumeM2'] == 1)
+        if st.session_state.get('pmc_check', False):
+            mask &= (df['priceMC'] == 1)
+        if st.session_state.get('pmh_check', False):
+            mask &= (df['priceMH'] == 1)
         if st.session_state.get('gc_check', False):
             mask &= (df['MACDGC'] == 1)
         if st.session_state.get('dc_check', False):
@@ -309,6 +317,8 @@ def check_indicators_and_save(df, min_volume, min_price, brsi_value, hrsi_value,
             mask &= (df['brsiMma'] == 1)
         if st.session_state.get('brsi1Mma_check', False):
             mask &= (df['brsi1stMma'] == 1)
+        if st.session_state.get('rrsi1_check', False):
+            mask &= (df['rrsi1z'] == 1)
         if st.session_state.get('zj_check', False):
             mask &= (df['zj'] == 1)
         if st.session_state.get('qs_rbpl_check', False):
@@ -792,6 +802,8 @@ def main():
                                            value=st.session_state['criteria'].get('brsiMma', False))
             brsi1Mma_selected = st.checkbox("主力首次上穿均线", key="brsi1Mma_check",
                                             value=st.session_state['criteria'].get('brsi1Mma', False))
+            rrsi1_selected = st.checkbox("散户首次归零", key="rrsi1_check",
+                                            value=st.session_state['criteria'].get('rrsi1', False))
 
             # st.write("主力： ")
             col1, col2 = st.columns([0.5, 1])  # Adjust width as needed
@@ -881,11 +893,15 @@ def main():
             st.write(" ")
             st.write(" ")
             st.markdown(
-                "<h5>🔷 <span style='color: #1E90FF; font-size: 20px;'>单一指标</span> 🔷</h5>",
+                "<h5>🔷 <span style='color: #1E90FF; font-size: 20px;'>其它选股指标</span> 🔷</h5>",
                 unsafe_allow_html=True
             )
             y1_selected = st.checkbox("第一黄柱", key="y1_check", value=st.session_state['criteria'].get('y1', False))
-
+            vm_selected = st.checkbox("交易量大于昨日", key="vm_check", value=st.session_state['criteria'].get('vm', False))
+            vm2_selected = st.checkbox("倍量", key="vm2_check", value=st.session_state['criteria'].get('vm2', False))
+            pmc_selected = st.checkbox("收市价高于昨日收市价", key="pmc_check", value=st.session_state['criteria'].get('pmc', False))
+            pmh_selected = st.checkbox("收市价高于昨日最高价", key="pmh_check",
+                                       value=st.session_state['criteria'].get('pmh', False))
 
         st.write(" ")
         st.write(" ")
@@ -904,6 +920,10 @@ def main():
             'x9': x9_selected,
             'y1': y1_selected,
             'zj': zj_selected,
+            'vm': vm_selected,
+            'vm2': vm2_selected,
+            'pmc': pmc_selected,
+            'pmh': pmh_selected,
             'zjrbd': zjbar_selected,
             'zjg2r': zjg2r_selected,
             'zjr2g': zjr2g_selected,
@@ -936,6 +956,7 @@ def main():
             'rsi_max': rsi_max,
             'brsiMma': brsiMma_selected,
             'brsi1Mma': brsi1Mma_selected,
+            'rrsi1': rrsi1_selected,
             'brsio':brsi_operator_selected,
             'brsi_value': brsi_value,
             'hrsio': hrsi_operator_selected,
@@ -1013,6 +1034,10 @@ def main():
             "n1": "神奇九转 - 牛一",
             "x9": "神奇九转 - 熊九",
             "y1": "第一黄柱",
+            "vm": "交易量大于昨日",
+            "vm2": "倍量",
+            "pmc": "收市价高于昨日收市价",
+            "pmh": "收市价高于昨日最高价",
             "dc": "MACD - 死叉",
             "gc": "MACD - 金叉",
             "a0": "MACD - 零轴上",
@@ -1046,6 +1071,7 @@ def main():
             "rsi_max": "最高 RSI 参数",
             "brsiMma": "资金图 - 筹码上穿均线",
             "brsi1Mma": "资金图 - 筹码首次上穿均线",
+            "rrsi1": "资金图 - 散户首次归零",
             "brsio": "资金图 - 主力参数关系",
             "brsi_value": "资金图 - 主力参数",
             "hrsio": "资金图 - 游资参数关系",
