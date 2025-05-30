@@ -281,6 +281,8 @@ def check_indicators_and_save(df, min_volume, min_price, brsi_value, hrsi_value,
             mask &= (df['x9'] == 1)
         if st.session_state.get('y1_check', False):
             mask &= (df['y1'] == 1)
+        if st.session_state.get('dxw_check', False):
+            mask &= (df['dxw'] == 1)
         if st.session_state.get('vm_check', False):
             mask &= (df['volumeM'] == 1)
         if st.session_state.get('vm2_check', False):
@@ -897,6 +899,7 @@ def main():
                 unsafe_allow_html=True
             )
             y1_selected = st.checkbox("第一黄柱", key="y1_check", value=st.session_state['criteria'].get('y1', False))
+            dxw_selected = st.checkbox("短线王", key="dxw_check", value=st.session_state['criteria'].get('dxw', False))
             vm_selected = st.checkbox("交易量大于昨日", key="vm_check", value=st.session_state['criteria'].get('vm', False))
             vm2_selected = st.checkbox("倍量", key="vm2_check", value=st.session_state['criteria'].get('vm2', False))
             pmc_selected = st.checkbox("收市价高于昨日收市价", key="pmc_check", value=st.session_state['criteria'].get('pmc', False))
@@ -919,6 +922,7 @@ def main():
             'n1': n1_selected,
             'x9': x9_selected,
             'y1': y1_selected,
+            'dxw': dxw_selected,
             'zj': zj_selected,
             'vm': vm_selected,
             'vm2': vm2_selected,
@@ -1034,6 +1038,7 @@ def main():
             "n1": "神奇九转 - 牛一",
             "x9": "神奇九转 - 熊九",
             "y1": "第一黄柱",
+            "dxw": "短线王",
             "vm": "交易量大于昨日",
             "vm2": "倍量",
             "pmc": "收市价高于昨日收市价",
