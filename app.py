@@ -705,7 +705,7 @@ def main():
                 "<h5>🔷 <span style='color: #1E90FF; font-size: 20px;'>五道彩图均线选项</span> 🔷</h5>",
                 unsafe_allow_html=True
             )
-            r1_selected = st.checkbox("均线： 5日 > 10日 > 20日", key="r1_check",
+            r1_selected = st.checkbox("均线： 10日 > 20日 > 30日", key="r1_check",
                                       value=st.session_state['criteria'].get('r1', False))
             r2_selected = st.checkbox("均线： 20日 > 30日 > 60日", key="r2_check",
                                       value=st.session_state['criteria'].get('r2', False))
@@ -1032,7 +1032,7 @@ def main():
 
         # Define a mapping for display labels
         criteria_labels = {
-            "r1": "五道彩图均线： 5日 > 10日 > 20日",
+            "r1": "五道彩图均线： 10日 > 20日 > 30日",
             "r2": "五道彩图均线： 20日 > 30日 > 60日",
             "r3": "五道彩图均线： 60日 > 120日 > 240日",
             "n1": "神奇九转 - 牛一",
