@@ -340,13 +340,21 @@ def check_indicators_and_save(df, min_volume, min_price, brsi_value, brsi2_value
         if st.session_state.get('qs_rbd_check', False):
             qs_selection = st.session_state.get('qs_rbd_check', 0)
             if qs_selection == 2:
-                mask &= (df['qs2R'] == 1)
+                mask &= ((df['qs2R'] == 1)| (df['qsGRB'] == 1))
             elif qs_selection == 3:
-                mask &= (df['qs3R'] == 1)
+                mask &= ((df['qs3R'] == 1)| (df['qs2R'] == 1)| (df['qsGRB'] == 1))
             elif qs_selection == 4:
-                mask &= (df['qs4R'] == 1)
+                mask &= ((df['qs4R'] == 1)|(df['qs3R'] == 1) | (df['qs2R'] == 1)| (df['qsGRB'] == 1))
             elif qs_selection == 5:
-                mask &= (df['qs5R'] == 1)
+                mask &= ((df['qs5R'] == 1) | (df['qs4R'] == 1)|(df['qs3R'] == 1) | (df['qs2R'] == 1)| (df['qsGRB'] == 1))
+            # if qs_selection == 2:
+            #     mask &= (df['qs2R'] == 1)
+            # elif qs_selection == 3:
+            #     mask &= (df['qs3R'] == 1)
+            # elif qs_selection == 4:
+            #     mask &= (df['qs4R'] == 1)
+            # elif qs_selection == 5:
+            #     mask &= (df['qs5R'] == 1)
         if st.session_state.get('zj_R2G_check', False):
             mask &= (df['zjR2G'] == 1)
         if st.session_state.get('zj_G2R_check', False):
