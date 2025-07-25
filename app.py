@@ -354,13 +354,13 @@ def check_indicators_and_save(df, min_volume, min_price, brsi_value, brsi2_value
         if st.session_state.get('zj_rbd_check', False):
             qs_selection = st.session_state.get('zj_rbd_check', 0)
             if qs_selection == 2:
-                mask &= (df['zj2R'] == 1)
+                mask &= ((df['zj2R'] == 1)| (df['zjG2R'] == 1))
             elif qs_selection == 3:
-                mask &= (df['zj3R'] == 1)
+                mask &= ((df['zj3R'] == 1)| (df['zj2R'] == 1)| (df['zjG2R'] == 1))
             elif qs_selection == 4:
-                mask &= (df['zj4R'] == 1)
+                mask &= ((df['zj4R'] == 1)|(df['zj3R'] == 1) | (df['zj2R'] == 1)| (df['zjG2R'] == 1))
             elif qs_selection == 5:
-                mask &= (df['zj5R'] == 1)
+                mask &= ((df['zj5R'] == 1) | (df['zj4R'] == 1)|(df['zj3R'] == 1) | (df['zj2R'] == 1)| (df['zjG2R'] == 1))
         if st.session_state.get('DKWRD_check', False):
             dkwr_selection = st.session_state.get('DKWRD_check', 0)
             if dkwr_selection == 2:
