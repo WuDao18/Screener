@@ -263,7 +263,7 @@ def select_stock(stock):
     st.session_state['selected_stock'] = stock
 
 
-def check_indicators_and_save(df, min_volume, min_price, brsi_value, hrsi_value, rrsi_value, rsi_min, rsi_max):
+def check_indicators_and_save(df, min_volume, min_price, brsi_value, brsi2_value, hrsi_value, rrsi_value, rsi_min, rsi_max):
     try:
         # Initialize mask for filtering
         mask = pd.Series([True] * len(df))
@@ -389,6 +389,14 @@ def check_indicators_and_save(df, min_volume, min_price, brsi_value, hrsi_value,
                 mask &= (df['brsi'] <= brsi_value)
             elif operator_selection == "=":
                 mask &= (df['brsi'] == brsi_value)
+        if st.session_state.get('brsi2_operator', False):
+            operator_selection = st.session_state.get('brsi2_operator', 0)
+            if operator_selection == ">=":
+                mask &= (df['brsi'] >= brsi2_value )
+            elif operator_selection == "<=":
+                mask &= (df['brsi'] <= brsi2_value)
+            elif operator_selection == "=":
+                mask &= (df['brsi'] == brsi2_value)
         if st.session_state.get('hrsi_operator', False):
             operator_selection = st.session_state.get('hrsi_operator', 0)
             if operator_selection == ">=":
@@ -807,10 +815,10 @@ def main():
             rrsi1_selected = st.checkbox("散户首次归零", key="rrsi1_check",
                                             value=st.session_state['criteria'].get('rrsi1', False))
 
-            # st.write("主力： ")
+            # st.write("主力1： ")
             col1, col2 = st.columns([0.5, 1])  # Adjust width as needed
             with col1:
-                brsi_operator_selected = st.selectbox(" 主力：", options=[0, ">=", "<=", "="],
+                brsi_operator_selected = st.selectbox(" 主力1：", options=[0, ">=", "<=", "="],
                                                       index=[0, ">=", "<=", "="].index(st.session_state['criteria'].get('brsio', 0)), key="brsi_operator")
             with col2:
                 brsi_value = st.number_input(" ", min_value=0.0, max_value=100.0, key="brsi_value",
@@ -818,6 +826,18 @@ def main():
                                              disabled=(brsi_operator_selected == 0))
             if brsi_operator_selected == 0:
                 brsi_value = 0.0  # Reset stored value
+
+            # st.write("主力2： ")
+            col1, col2 = st.columns([0.5, 1])  # Adjust width as needed
+            with col1:
+                brsi2_operator_selected = st.selectbox(" 主力2：", options=[0, ">=", "<=", "="],
+                                                      index=[0, ">=", "<=", "="].index(st.session_state['criteria'].get('brsio2', 0)), key="brsi2_operator")
+            with col2:
+                brsi2_value = st.number_input(" ", min_value=0.0, max_value=100.0, key="brsi2_value",
+                                             value=float(st.session_state['criteria'].get('brsi2_value', 0.0)), step=0.1,
+                                             disabled=(brsi2_operator_selected == 0))
+            if brsi2_operator_selected == 0:
+                brsi2_value = 0.0  # Reset stored value
 
             # st.write("游资： ")
             col1, col2 = st.columns([0.5, 1])  # Adjust width as needed
@@ -963,6 +983,8 @@ def main():
             'rrsi1': rrsi1_selected,
             'brsio':brsi_operator_selected,
             'brsi_value': brsi_value,
+            'brsio2': brsi2_operator_selected,
+            'brsi2_value': brsi2_value,
             'hrsio': hrsi_operator_selected,
             'hrsi_value': hrsi_value,
             'rrsio': rrsi_operator_selected,
@@ -980,7 +1002,7 @@ def main():
 
                     if isinstance(file_content, pd.DataFrame) and not file_content.empty:
                         matching_symbols, temp_file_path = check_indicators_and_save(
-                            file_content, min_volume, min_price, brsi_value, hrsi_value, rrsi_value, rsi_min, rsi_max)
+                            file_content, min_volume, min_price, brsi_value, brsi2_value, hrsi_value, rrsi_value, rsi_min, rsi_max)
                         st.session_state['temp_file_path'] = temp_file_path
                         st.session_state['matching_stocks'] = matching_symbols
 
@@ -1079,6 +1101,8 @@ def main():
             "rrsi1": "资金图 - 散户首次归零",
             "brsio": "资金图 - 主力参数关系",
             "brsi_value": "资金图 - 主力参数",
+            "brsio": "资金图 - 主力参数关系2",
+            "brsi_value": "资金图 - 主力参数2",
             "hrsio": "资金图 - 游资参数关系",
             "hrsi_value": "资金图 - 游资参数",
             "rrsio": "资金图 - 散户参数关系",
