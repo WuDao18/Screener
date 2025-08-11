@@ -82,7 +82,10 @@ def send_otp(email):
 def validate_otp(email, otp):
     """Validate the OTP provided by the user."""
     try:
-        otp_doc = db.collection("otp_verifications").document(email).get()
+        # Normalize email to lowercase for case-insensitive matching
+        normalized_email = email.strip().lower()
+
+        otp_doc = db.collection("otp_verifications").document(normalized_email).get()
         if not otp_doc.exists:
             print("No OTP request found for this user.")
             return False
