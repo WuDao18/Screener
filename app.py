@@ -649,8 +649,8 @@ def main():
         st.subheader("登入 Login")
 
         # Input for user email
-        email = st.text_input("电邮 Email", key="email_input")
-
+        email_user = st.text_input("电邮 Email", key="email_input")
+        email = email_user.strip().lower()
         # step 1: send OTP handling
         if not st.session_state["otp_sent"]:
             if st.button("发送密码 Send OTP"):
