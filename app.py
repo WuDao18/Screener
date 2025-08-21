@@ -695,7 +695,7 @@ def main():
         # Store the previous exchange selection
         previous_exchange = st.session_state['selected_exchange']
         st.markdown(f"### 📈 所选股市：   Select Exchange：")
-        exchange = st.selectbox("", ["MYX", "NASDAQ", "NYSE", "HKEX", "SSE", "SZSE","SGX"])
+        exchange = st.selectbox("", ["MYX", "NASDAQ", "NYSE", "HKEX"])
         st.write(" ")
         st.write(" ")
         previous_timeframe = st.session_state['period']
