@@ -138,13 +138,13 @@ def add_custom_css():
         <style>
         /* Style for the download button */
         div.stDownloadButton > button {
-            background-color: #004080; 
+            background-color: #007BFF;
             color: white;
             font-weight: bold;
 
         }
         div.stDownloadButton > button:hover {
-            background-color: #002b5e; 
+            background-color: blue;
             color: white;
         }
         </style>
@@ -279,6 +279,10 @@ def check_indicators_and_save(df, min_volume, min_price, brsi_value, brsi2_value
             mask &= (df['r2'] == 1)
         if st.session_state.get('r3_check', False):
             mask &= (df['r3'] == 1)
+        if st.session_state.get('r4_check', False):
+            mask &= (df['r4'] == 1)
+        if st.session_state.get('r5_check', False):
+            mask &= (df['b300'] == 1)
         if st.session_state.get('n1_check', False):
             mask &= (df['n1'] == 1)
         if st.session_state.get('x9_check', False):
@@ -729,9 +733,12 @@ def main():
                                       value=st.session_state['criteria'].get('r1', False))
             r2_selected = st.checkbox("均线： 20日 > 30日 > 60日", key="r2_check",
                                       value=st.session_state['criteria'].get('r2', False))
-            r3_selected = st.checkbox("均线： 60日 > 120日 > 240日", key="r3_check",
+            r3_selected = st.checkbox("均线： 10日 > 40日 > 80日", key="r3_check",
                                       value=st.session_state['criteria'].get('r3', False))
-
+            r4_selected = st.checkbox("均线： 60日 > 120日 > 240日", key="r4_check",
+                                      value=st.session_state['criteria'].get('r4', False))
+            r5_selected = st.checkbox("股价 > 均线 300日", key="r5_check",
+                                      value=st.session_state['criteria'].get('r5', False))
 
             st.write(" ")
             st.write(" ")
@@ -951,6 +958,8 @@ def main():
             'r1': r1_selected,
             'r2': r2_selected,
             'r3': r3_selected,
+            'r4': r4_selected,
+            'r5': r5_selected,
             'n1': n1_selected,
             'x9': x9_selected,
             'y1': y1_selected,
@@ -1068,7 +1077,9 @@ def main():
         criteria_labels = {
             "r1": "五道彩图均线： 10日 > 20日 > 30日",
             "r2": "五道彩图均线： 20日 > 30日 > 60日",
-            "r3": "五道彩图均线： 60日 > 120日 > 240日",
+            "r3": "五道彩图均线： 10日 > 40日 > 80日",
+            "r4": "五道彩图均线： 60日 > 120日 > 240日",
+            "r5": "股价在300日均线上",
             "n1": "神奇九转 - 牛一",
             "x9": "神奇九转 - 熊九",
             "y1": "第一黄柱",
