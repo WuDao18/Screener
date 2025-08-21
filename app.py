@@ -283,6 +283,8 @@ def check_indicators_and_save(df, min_volume, min_price, brsi_value, brsi2_value
             mask &= (df['r4'] == 1)
         if st.session_state.get('r5_check', False):
             mask &= (df['b300'] == 1)
+        if st.session_state.get('r6_check', False):
+            mask &= (df['3b300'] == 1)
         if st.session_state.get('n1_check', False):
             mask &= (df['n1'] == 1)
         if st.session_state.get('x9_check', False):
@@ -739,6 +741,8 @@ def main():
                                       value=st.session_state['criteria'].get('r4', False))
             r5_selected = st.checkbox("股价 > 均线 300日", key="r5_check",
                                       value=st.session_state['criteria'].get('r5', False))
+            r6_selected = st.checkbox("股价 < 130% 均线 300日", key="r6_check",
+                                      value=st.session_state['criteria'].get('r6', False))
 
             st.write(" ")
             st.write(" ")
@@ -960,6 +964,7 @@ def main():
             'r3': r3_selected,
             'r4': r4_selected,
             'r5': r5_selected,
+            'r6': r6_selected,
             'n1': n1_selected,
             'x9': x9_selected,
             'y1': y1_selected,
@@ -1080,6 +1085,7 @@ def main():
             "r3": "五道彩图均线： 10日 > 40日 > 80日",
             "r4": "五道彩图均线： 60日 > 120日 > 240日",
             "r5": "股价在300日均线上",
+            "r6": "股价在130%的300日均线内",
             "n1": "神奇九转 - 牛一",
             "x9": "神奇九转 - 熊九",
             "y1": "第一黄柱",
