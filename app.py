@@ -195,13 +195,14 @@ st.markdown(
     div[data-baseweb="select"] > div {
         font-size: 16px !important;
         font-family: Arial, sans-serif !important;
-        color: darkblue !important;
     }
     </style>
     """,
     unsafe_allow_html=True
 )
 
+
+# color: darkblue !important;
 def download_file():
     """Retrieve all stock data from the `screened_result` collection and return as a DataFrame."""
     selected_exchange = st.session_state.get("selected_exchange", "MYX")  # Default to MYX if not set
