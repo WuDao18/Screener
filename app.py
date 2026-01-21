@@ -1,5 +1,6 @@
-#current verion updated 18/4/25
+#current verion updated 21/1/26
 #include weekly and all countries
+#include 第一红柱 screening
 
 import streamlit as st
 import pandas as pd
@@ -325,6 +326,8 @@ def check_indicators_and_save(df, min_volume, min_price, brsi_value, brsi2_value
             mask &= (df['zlG2R'] == 1)
         if st.session_state.get('ZLR2G_check', False):
             mask &= (df['zlR2G'] == 1)
+        if st.session_state.get('brsi1st_check', False):
+            mask &= (df['brsi1st'] == 1)
         if st.session_state.get('brsiMma_check', False):
             mask &= (df['brsiMma'] == 1)
         if st.session_state.get('brsi1Mma_check', False):
@@ -831,6 +834,9 @@ def main():
                 "<h5>🔷 <span style='color: #1E90FF; font-size: 20px;'>资金图</span> 🔷</h5>",
                 unsafe_allow_html=True
             )
+
+            brsi1st_selected = st.checkbox("主力首次出现", key="brsi1st_check",
+                                           value=st.session_state['criteria'].get('brsi1st', False))
             brsiMma_selected = st.checkbox("主力上穿均线", key="brsiMma_check",
                                            value=st.session_state['criteria'].get('brsiMma', False))
             brsi1Mma_selected = st.checkbox("主力首次上穿均线", key="brsi1Mma_check",
@@ -1005,6 +1011,7 @@ def main():
             'rsi_min': rsi_min,
             'rsi_max': rsi_max,
             'brsiMma': brsiMma_selected,
+            'brsi1st': brsi1st_selected,
             'brsi1Mma': brsi1Mma_selected,
             'rrsi1': rrsi1_selected,
             'brsio':brsi_operator_selected,
@@ -1125,8 +1132,9 @@ def main():
             "rsi": "RSI",
             "rsi_min": "最低 RSI 参数",
             "rsi_max": "最高 RSI 参数",
-            "brsiMma": "资金图 - 筹码上穿均线",
-            "brsi1Mma": "资金图 - 筹码首次上穿均线",
+            "brsi1st": "主力首次出现",
+            "brsiMma": "资金图 - 主力上穿均线",
+            "brsi1Mma": "资金图 - 主力首次上穿均线",
             "rrsi1": "资金图 - 散户首次归零",
             "brsio": "资金图 - 主力参数关系",
             "brsi_value": "资金图 - 主力参数",
