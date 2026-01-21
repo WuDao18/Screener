@@ -835,7 +835,7 @@ def main():
                 unsafe_allow_html=True
             )
 
-            brsi1st_selected = st.checkbox("主力首次出现", key="brsi1st_check",
+            brsi1st_selected = st.checkbox("第一次出现红柱", key="brsi1st_check",
                                            value=st.session_state['criteria'].get('brsi1st', False))
             brsiMma_selected = st.checkbox("主力上穿均线", key="brsiMma_check",
                                            value=st.session_state['criteria'].get('brsiMma', False))
@@ -1132,7 +1132,7 @@ def main():
             "rsi": "RSI",
             "rsi_min": "最低 RSI 参数",
             "rsi_max": "最高 RSI 参数",
-            "brsi1st": "主力首次出现",
+            "brsi1st": "第一次出现红柱",
             "brsiMma": "资金图 - 主力上穿均线",
             "brsi1Mma": "资金图 - 主力首次上穿均线",
             "rrsi1": "资金图 - 散户首次归零",
